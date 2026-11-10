@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">Battery Pill</string>
+    <string name="a11y_summary">Puts the pill in Samsung\'s battery spot and matches the status bar icon colour</string>
+    <string name="a11y_description">Battery Pill reads only the position of Samsung\'s battery icon and the colour of the status bar icons, so it can draw its pill exactly over the stock battery (hiding the number) without moving the network and Wi-Fi icons. It does not read, store or send anything you type or see in other apps.</string>
+</resources>
