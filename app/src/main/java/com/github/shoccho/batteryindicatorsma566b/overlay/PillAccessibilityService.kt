@@ -69,6 +69,8 @@ class PillAccessibilityService : AccessibilityService() {
     private var screenOn = true
     private var statusBarVisible = true
     private var scanPending = false
+    /** This instance is connected and hasn't been torn down. */
+    private var live = false
     private var lastShotAt = 0L
     private var shotPending = false
     private val rect = Rect()
@@ -142,6 +144,8 @@ class PillAccessibilityService : AccessibilityService() {
                 }
             }
         }
+        live = true
+        current = this
         _connected.value = true
     }
 
@@ -601,9 +605,15 @@ class PillAccessibilityService : AccessibilityService() {
     }
 
     private fun teardown() {
-        if (!_connected.value) return
-        _connected.value = false
-        _tint.value = null
+        if (!live) return
+        live = false
+        // On a quick rebind the old instance can be destroyed after the new one connected; only
+        // the current instance may report the service as gone.
+        if (current === this) {
+            current = null
+            _connected.value = false
+            _tint.value = null
+        }
         scope?.cancel()
         scope = null
         handler.removeCallbacksAndMessages(null)
@@ -634,6 +644,9 @@ class PillAccessibilityService : AccessibilityService() {
         private const val CONTENT_COOLDOWN_MIN_MS = 1500L
         private const val CONTENT_COOLDOWN_MAX_MS = 12_000L
         private const val POLL_MS = 4000L
+
+        /** The connected instance, if any. Main thread only. */
+        private var current: PillAccessibilityService? = null
 
         private val _connected = MutableStateFlow(false)
         /** True while the user has this service turned on and it's running. */

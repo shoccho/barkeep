@@ -1,5 +1,21 @@
 package com.github.shoccho.batteryindicatorsma566b.ui
 
+import android.content.Context
+import android.content.SharedPreferences
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.clickable
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.StrokeJoin
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.platform.LocalContext
+import androidx.core.content.edit
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
@@ -39,9 +55,43 @@ import kotlinx.coroutines.delay
 import java.util.Locale
 import kotlin.math.roundToInt
 
-/** One UI-style rounded section card with a small heading above it. */
+/**
+ * Open/closed state of a foldable block. Kept in its own small prefs file (not with the pill's
+ * settings), so the page opens the way you left it and "Reset to defaults" doesn't touch it.
+ */
+class Fold internal constructor(private val prefs: SharedPreferences, private val key: String, initial: Boolean) {
+    var open by mutableStateOf(initial)
+        private set
+
+    fun toggle() {
+        open = !open
+        prefs.edit { putBoolean(key, open) }
+    }
+}
+
 @Composable
-fun Section(title: String, modifier: Modifier = Modifier, content: @Composable ColumnScope.() -> Unit) {
+fun rememberFold(key: String, openByDefault: Boolean = false): Fold {
+    val context = LocalContext.current
+    return remember(key) {
+        val prefs = context.getSharedPreferences(FOLD_PREFS, Context.MODE_PRIVATE)
+        Fold(prefs, key, prefs.getBoolean(key, openByDefault))
+    }
+}
+
+private const val FOLD_PREFS = "ui_folds"
+
+/**
+ * One UI-style rounded section card with a small heading above it. With a [fold], the card
+ * collapses to one tappable line showing [summary].
+ */
+@Composable
+fun Section(
+    title: String,
+    modifier: Modifier = Modifier,
+    fold: Fold? = null,
+    summary: String? = null,
+    content: @Composable ColumnScope.() -> Unit,
+) {
     Column(modifier.fillMaxWidth()) {
         Text(
             title,
@@ -54,8 +104,86 @@ fun Section(title: String, modifier: Modifier = Modifier, content: @Composable C
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
             modifier = Modifier.fillMaxWidth(),
         ) {
-            Column(Modifier.padding(vertical = 8.dp), content = content)
+            if (fold == null) {
+                Column(Modifier.padding(vertical = 8.dp), content = content)
+            } else {
+                Column(Modifier.animateContentSize()) {
+                    FoldHeader(
+                        title = if (fold.open) "Hide" else (summary ?: "Show"),
+                        open = fold.open,
+                        onClick = fold::toggle,
+                        modifier = Modifier.padding(horizontal = 20.dp, vertical = 14.dp),
+                        quiet = fold.open,
+                    )
+                    if (fold.open) {
+                        HorizontalDivider(Modifier.padding(horizontal = 20.dp))
+                        Column(Modifier.padding(vertical = 8.dp), content = content)
+                    }
+                }
+            }
         }
+    }
+}
+
+/** A foldable group inside a section card: a titled row that opens to reveal [content]. */
+@Composable
+fun FoldGroup(
+    title: String,
+    fold: Fold,
+    summary: String? = null,
+    content: @Composable ColumnScope.() -> Unit,
+) {
+    Column(Modifier.fillMaxWidth().animateContentSize()) {
+        HorizontalDivider(Modifier.padding(horizontal = 20.dp, vertical = 4.dp))
+        Row(
+            Modifier
+                .fillMaxWidth()
+                .clickable(onClick = fold::toggle)
+                .padding(horizontal = 20.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Column(Modifier.weight(1f)) {
+                Text(title, style = MaterialTheme.typography.titleSmall)
+                if (summary != null) {
+                    Text(summary, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            }
+            Chevron(fold.open)
+        }
+        if (fold.open) Column(content = content)
+    }
+}
+
+@Composable
+private fun FoldHeader(title: String, open: Boolean, onClick: () -> Unit, modifier: Modifier, quiet: Boolean) {
+    Row(
+        Modifier.fillMaxWidth().clickable(onClick = onClick).then(modifier),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            title,
+            style = MaterialTheme.typography.bodyMedium,
+            color = if (quiet) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier.weight(1f),
+        )
+        Chevron(open)
+    }
+}
+
+/** Down-pointing chevron that turns to point up when open. */
+@Composable
+private fun Chevron(open: Boolean) {
+    val turn by animateFloatAsState(if (open) 180f else 0f, label = "chevron")
+    val color = MaterialTheme.colorScheme.onSurfaceVariant
+    Canvas(Modifier.size(20.dp).rotate(turn)) {
+        val w = size.width
+        val h = size.height
+        val path = Path().apply {
+            moveTo(w * 0.25f, h * 0.38f)
+            lineTo(w * 0.5f, h * 0.63f)
+            lineTo(w * 0.75f, h * 0.38f)
+        }
+        drawPath(path, color, style = Stroke(width = 2.dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round))
     }
 }
 

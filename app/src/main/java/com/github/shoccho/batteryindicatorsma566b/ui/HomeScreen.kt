@@ -34,6 +34,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -43,6 +44,7 @@ import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.LargeTopAppBar
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
@@ -159,8 +161,8 @@ fun HomeScreen() {
                 )
             }
             item { MasterSwitch(settings.enabled, running, permissions.overlay, setEnabled) }
-            if (!permissions.overlay || !permissions.unrestricted || !permissions.secureSettings) {
-                item { SetupSection(permissions) }
+            item {
+                PermissionsSection(permissions, a11yConnected) { permissions = Permissions.read(context) }
             }
             item { StyleSection(settings, liveBattery, screen, tint, update) }
             item {
@@ -171,6 +173,7 @@ fun HomeScreen() {
             item { ColorSection(settings, a11yConnected, update) }
             item { BehaviourSection(settings, permissions, update) }
             item { BatterySection(liveBattery) }
+            item { ResetButton { repo.update { PillSettings(enabled = it.enabled) } } }
             item {
                 Text(
                     "Made for Galaxy A56 · One UI 9 · v1.0",
@@ -300,12 +303,22 @@ private fun MasterSwitch(enabled: Boolean, running: Boolean, overlayAllowed: Boo
     }
 }
 
-// ---- Setup -------------------------------------------------------------------------------------
+// ---- Permissions -------------------------------------------------------------------------------
 
 @Composable
-private fun SetupSection(p: Permissions) {
+private fun PermissionsSection(p: Permissions, a11yConnected: Boolean, refreshPermissions: () -> Unit) {
     val context = LocalContext.current
-    Section("Setup") {
+    val runtimeLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions(),
+    ) { refreshPermissions() }
+    val granted = listOf(p.overlay, p.unrestricted, p.secureSettings, a11yConnected, p.phone && p.nearby)
+    val summary = when {
+        !p.overlay -> "\"Appear on top\" is needed to show the pill"
+        granted.all { it } -> "All allowed"
+        else -> "${granted.count { it }} of ${granted.size} allowed"
+    }
+    // Opens by itself only while the one required permission is missing.
+    Section("Permissions", fold = rememberFold("permissions", openByDefault = !p.overlay), summary = summary) {
         SetupRow(
             done = p.overlay,
             title = "Appear on top",
@@ -326,9 +339,9 @@ private fun SetupSection(p: Permissions) {
         HorizontalDivider(Modifier.padding(horizontal = 20.dp))
         SetupRow(
             done = p.secureSettings,
-            title = "Hide Samsung's battery (optional)",
-            body = "Grant once from a computer, then the app can hide the stock battery-with-number " +
-                "while your pill is on and bring it back when it's off:",
+            title = "Hide Samsung's icons (adb grant)",
+            body = "Grant once from a computer, then the app can hide Samsung's battery (and, in " +
+                "\"Own icons\", its other icons) and bring them back when the pill is off:",
             action = "Copy",
             extra = {
                 Text(
@@ -346,6 +359,20 @@ private fun SetupSection(p: Permissions) {
             val cm = context.getSystemService(ClipboardManager::class.java)
             cm.setPrimaryClip(ClipData.newPlainText("adb", SystemBatteryIcon.ADB_GRANT_COMMAND))
             Toast.makeText(context, "Command copied", Toast.LENGTH_SHORT).show()
+        }
+        HorizontalDivider(Modifier.padding(horizontal = 20.dp))
+        AccessibilityRow(p, a11yConnected, refreshPermissions)
+        HorizontalDivider(Modifier.padding(horizontal = 20.dp))
+        SetupRow(
+            done = p.phone && p.nearby,
+            title = "Phone & Nearby devices",
+            body = "For \"Own icons\": Phone shows both SIMs and the 5G/4G label; Nearby devices " +
+                "shows when Bluetooth is connected.",
+            action = "Allow",
+        ) {
+            runtimeLauncher.launch(
+                arrayOf(android.Manifest.permission.READ_PHONE_STATE, android.Manifest.permission.BLUETOOTH_CONNECT),
+            )
         }
     }
 }
@@ -571,8 +598,8 @@ private fun CoverControls(
         "The pill sits exactly on Samsung's battery, hiding its number. Samsung's icon keeps the " +
             "rightmost slot, so network and Wi-Fi never move or overlap. Follows it onto the lock screen too.",
     )
-    AccessibilityRow(p, a11yConnected, refreshPermissions)
     if (!a11yConnected) {
+        AccessibilityRow(p, a11yConnected, refreshPermissions)
         Hint("Until it's on, the pill stays in its free position.")
     }
     SliderRow("Cover width", s.coverExtraWidthDp, PillSettings.COVER_EXTRA_RANGE,
@@ -588,8 +615,8 @@ private fun AccessibilityRow(p: Permissions, a11yConnected: Boolean, refreshPerm
     SetupRow(
         done = a11yConnected,
         title = if (p.accessibility && !a11yConnected) "Accessibility: starting…" else "Accessibility service",
-        body = "Lets the pill draw above the status bar and see where Samsung's icons are. " +
-            "It only reads the status bar — nothing from your apps.",
+        body = "For \"Samsung's spot\", \"Own icons\" and \"Match icons\". Lets the pill draw above " +
+            "the status bar and see where Samsung's icons are. It only reads the status bar — nothing from your apps.",
         action = if (p.secureSettings) "Turn on" else "Open",
     ) {
         if (p.secureSettings && PillAccessibilityService.enableWithSecureSettings(context)) {
@@ -608,71 +635,79 @@ private fun OwnIconsControls(
     update: ((PillSettings) -> PillSettings) -> Unit,
     refreshPermissions: () -> Unit,
 ) {
-    val permissionLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.RequestMultiplePermissions(),
-    ) { refreshPermissions() }
     Hint(
         "Samsung's sound, Wi-Fi, signal and other right-side icons and its battery are hidden; " +
             "the app draws its own row in your order, pill rightmost. Leaving this mode brings " +
             "Samsung's icons back exactly as they were.",
     )
-    AccessibilityRow(p, a11yConnected, refreshPermissions)
+    if (!a11yConnected) AccessibilityRow(p, a11yConnected, refreshPermissions)
     if (!p.secureSettings) {
-        Hint("Also needs the one-time adb grant from Setup, to hide Samsung's icons.")
+        Hint("Also needs the one-time adb grant (see Permissions) to hide Samsung's icons.")
     }
-    SetupRow(
-        done = p.phone && p.nearby,
-        title = "Phone & Nearby devices (optional)",
-        body = "Phone shows both SIMs and the 5G/4G label; Nearby devices shows when Bluetooth is connected.",
-        action = "Allow",
-    ) {
-        permissionLauncher.launch(
-            arrayOf(android.Manifest.permission.READ_PHONE_STATE, android.Manifest.permission.BLUETOOTH_CONNECT),
-        )
+    if (!(p.phone && p.nearby)) {
+        Hint("Allow Phone & Nearby devices under Permissions for both SIMs, the 5G/4G label and Bluetooth connected.")
     }
-    Hint("Hidden for good in this mode (an app can't detect them): satellite, screen recording, location-in-use, VoLTE.")
 
-    Text(
+    val shown = s.iconOrder.filter { it in s.iconsOn }
+    FoldGroup(
         "Icons, left to right",
-        style = MaterialTheme.typography.titleSmall,
-        modifier = Modifier.padding(start = 20.dp, top = 12.dp, bottom = 4.dp),
-    )
-    s.iconOrder.forEachIndexed { index, icon ->
-        Row(
-            Modifier.fillMaxWidth().padding(start = 12.dp, end = 12.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Switch(
-                checked = icon in s.iconsOn,
-                onCheckedChange = { on ->
-                    update { it.copy(iconsOn = if (on) it.iconsOn + icon else it.iconsOn - icon) }
-                },
-                modifier = Modifier.padding(horizontal = 8.dp),
-            )
-            Text(icon.label, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f))
-            TextButton(enabled = index > 0, onClick = { update { it.copy(iconOrder = it.iconOrder.move(index, -1)) } }) {
-                Text("↑", style = MaterialTheme.typography.titleLarge)
+        rememberFold("own_icons.icons"),
+        summary = "${shown.size} of ${s.iconOrder.size} shown",
+    ) {
+        s.iconOrder.forEachIndexed { index, icon ->
+            Row(
+                Modifier.fillMaxWidth().padding(start = 12.dp, end = 12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Switch(
+                    checked = icon in s.iconsOn,
+                    onCheckedChange = { on ->
+                        update { it.copy(iconsOn = if (on) it.iconsOn + icon else it.iconsOn - icon) }
+                    },
+                    modifier = Modifier.padding(horizontal = 8.dp),
+                )
+                Text(icon.label, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f))
+                TextButton(enabled = index > 0, onClick = { update { it.copy(iconOrder = it.iconOrder.move(index, -1)) } }) {
+                    Text("↑", style = MaterialTheme.typography.titleLarge)
+                }
+                TextButton(
+                    enabled = index < s.iconOrder.lastIndex,
+                    onClick = { update { it.copy(iconOrder = it.iconOrder.move(index, 1)) } },
+                ) { Text("↓", style = MaterialTheme.typography.titleLarge) }
             }
-            TextButton(
-                enabled = index < s.iconOrder.lastIndex,
-                onClick = { update { it.copy(iconOrder = it.iconOrder.move(index, 1)) } },
-            ) { Text("↓", style = MaterialTheme.typography.titleLarge) }
         }
+        Hint("The battery pill always sits at the far right. Hidden for good in this mode (an app can't " +
+            "detect them): satellite, screen recording, location-in-use, VoLTE.")
     }
-    Hint("The battery pill always sits at the far right.")
-    SliderRow("Icon size", s.rowIconSizeDp, PillSettings.ROW_ICON_RANGE, { v -> update { it.copy(rowIconSizeDp = v) } })
-    SliderRow("Spacing", s.rowGapDp, PillSettings.ROW_GAP_RANGE, { v -> update { it.copy(rowGapDp = v) } }, step = 0.25f)
-    SliderRow("Distance from right edge", s.rowEndMarginDp, PillSettings.ROW_END_RANGE, { v -> update { it.copy(rowEndMarginDp = v) } })
-    SliderRow("Pill width", s.widthDp, PillSettings.WIDTH_RANGE, { v -> update { it.copy(widthDp = v) } })
-    SliderRow("Pill height", s.heightDp, PillSettings.HEIGHT_RANGE, { v -> update { it.copy(heightDp = v) } })
-    SwitchRow(
-        "Samsung icon art", s.rowSamsungArt, { v -> update { it.copy(rowSamsungArt = v) } },
-        subtitle = "Uses One UI's own icons from your phone; off = Battery Pill's drawn icons",
+
+    val details = listOfNotNull(
+        if (s.rowSamsungArt) "Samsung art" else "Drawn icons",
+        "Wi-Fi generation".takeIf { s.rowWifiGeneration },
+        "arrows".takeIf { s.rowActivityArrows },
+        "5G/4G".takeIf { s.rowNetworkType },
     )
-    SwitchRow("Wi-Fi generation (5 / 6 / 7)", s.rowWifiGeneration, { v -> update { it.copy(rowWifiGeneration = v) } })
-    SwitchRow("Data activity arrows", s.rowActivityArrows, { v -> update { it.copy(rowActivityArrows = v) } })
-    SwitchRow("Network type (5G / 4G)", s.rowNetworkType, { v -> update { it.copy(rowNetworkType = v) } },
-        subtitle = "Shown while mobile data carries the internet")
+    FoldGroup("Icon details", rememberFold("own_icons.details"), summary = details.joinToString(" · ")) {
+        SwitchRow(
+            "Samsung icon art", s.rowSamsungArt, { v -> update { it.copy(rowSamsungArt = v) } },
+            subtitle = "Uses One UI's own icons from your phone; off = Battery Pill's drawn icons",
+        )
+        SwitchRow("Wi-Fi generation (5 / 6 / 7)", s.rowWifiGeneration, { v -> update { it.copy(rowWifiGeneration = v) } })
+        SwitchRow("Data activity arrows", s.rowActivityArrows, { v -> update { it.copy(rowActivityArrows = v) } })
+        SwitchRow("Network type (5G / 4G)", s.rowNetworkType, { v -> update { it.copy(rowNetworkType = v) } },
+            subtitle = "Shown while mobile data carries the internet")
+    }
+
+    FoldGroup(
+        "Size & spacing",
+        rememberFold("own_icons.size"),
+        summary = "Icons ${formatDp(s.rowIconSizeDp)} · pill ${formatDp(s.widthDp)} × ${formatDp(s.heightDp)}",
+    ) {
+        SliderRow("Icon size", s.rowIconSizeDp, PillSettings.ROW_ICON_RANGE, { v -> update { it.copy(rowIconSizeDp = v) } })
+        SliderRow("Spacing", s.rowGapDp, PillSettings.ROW_GAP_RANGE, { v -> update { it.copy(rowGapDp = v) } }, step = 0.25f)
+        SliderRow("Distance from right edge", s.rowEndMarginDp, PillSettings.ROW_END_RANGE, { v -> update { it.copy(rowEndMarginDp = v) } })
+        SliderRow("Pill width", s.widthDp, PillSettings.WIDTH_RANGE, { v -> update { it.copy(widthDp = v) } })
+        SliderRow("Pill height", s.heightDp, PillSettings.HEIGHT_RANGE, { v -> update { it.copy(heightDp = v) } })
+    }
 }
 
 private fun <T> List<T>.move(index: Int, by: Int): List<T> {
@@ -704,7 +739,7 @@ private fun ColorSection(s: PillSettings, a11yConnected: Boolean, update: ((Pill
             s.colorMode == ColorMode.MATCH && a11yConnected ->
                 Hint("Turns dark or light together with Samsung's icons, in every app.")
             s.colorMode == ColorMode.MATCH ->
-                Hint("Needs the Battery Pill accessibility service (Position → Samsung's spot shows how). Following the theme until then.")
+                Hint("Needs the Battery Pill accessibility service (see Permissions). Following the theme until then.")
         }
         AnimatedVisibility(s.colorMode == ColorMode.CUSTOM) {
             Column {
@@ -756,7 +791,10 @@ private fun ColorSection(s: PillSettings, a11yConnected: Boolean, update: ((Pill
 
 @Composable
 private fun BehaviourSection(s: PillSettings, p: Permissions, update: ((PillSettings) -> PillSettings) -> Unit) {
-    Section("Behaviour") {
+    val on = listOf(
+        s.showBolt, s.chargingAnimation, s.criticalPulse, s.hideInFullscreen, s.hideInLandscape, s.startOnBoot,
+    ).count { it } + if (s.hideSystemIcon && s.placement == Placement.FREE) 1 else 0
+    Section("Behaviour", fold = rememberFold("behaviour"), summary = "Charging, full screen, start-up · $on on") {
         SwitchRow("Charging bolt", s.showBolt, { v -> update { it.copy(showBolt = v) } })
         SwitchRow(
             "Charging shimmer", s.chargingAnimation, { v -> update { it.copy(chargingAnimation = v) } },
@@ -777,7 +815,7 @@ private fun BehaviourSection(s: PillSettings, p: Permissions, update: ((PillSett
             subtitle = when {
                 s.placement != Placement.FREE -> "Free position only — the other positions manage Samsung's icons themselves"
                 p.secureSettings -> "Restored automatically when the pill turns off"
-                else -> "Needs the one-time adb grant in Setup"
+                else -> "Needs the one-time adb grant (see Permissions)"
             },
             enabled = p.secureSettings && s.placement == Placement.FREE,
         )
@@ -790,7 +828,13 @@ private fun BehaviourSection(s: PillSettings, p: Permissions, update: ((PillSett
 @Composable
 private fun BatterySection(b: BatterySnapshot?) {
     val power = rememberPowerStats()
-    Section("Battery right now") {
+    val summary = b?.let {
+        buildString {
+            append("${it.percent}% · ${statusText(it)}")
+            if (!it.temperatureC.isNaN()) append(String.format(Locale.US, " · %.1f °C", it.temperatureC))
+        }
+    }
+    Section("Battery right now", fold = rememberFold("battery"), summary = summary) {
         if (b == null) {
             Hint("Reading…")
             return@Section
@@ -828,6 +872,38 @@ private fun BatterySection(b: BatterySnapshot?) {
                 }
             }
         }
+    }
+}
+
+// ---- Reset -------------------------------------------------------------------------------------
+
+@Composable
+private fun ResetButton(onReset: () -> Unit) {
+    val context = LocalContext.current
+    var asking by remember { mutableStateOf(false) }
+    Box(Modifier.fillMaxWidth().padding(top = 8.dp), contentAlignment = Alignment.Center) {
+        OutlinedButton(onClick = { asking = true }) { Text("Reset to defaults") }
+    }
+    if (asking) {
+        AlertDialog(
+            onDismissRequest = { asking = false },
+            title = { Text("Reset to defaults?") },
+            text = {
+                Text(
+                    "Style, position, colours, Own icons order and behaviour go back to how they " +
+                        "were on first install. The pill stays on or off as it is now, and " +
+                        "permissions aren't touched.",
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    asking = false
+                    onReset()
+                    Toast.makeText(context, "Settings reset", Toast.LENGTH_SHORT).show()
+                }) { Text("Reset") }
+            },
+            dismissButton = { TextButton(onClick = { asking = false }) { Text("Cancel") } },
+        )
     }
 }
 
