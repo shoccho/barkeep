@@ -17,14 +17,17 @@ import com.github.shoccho.batteryindicatorsma566b.core.PillSettings
  * critical pulse) and pauses all of them whenever it isn't [active] (screen off / hidden), so it
  * costs nothing while you aren't looking at it.
  */
-class PillView(context: Context) : View(context) {
+open class PillView(context: Context) : View(context) {
 
     private val renderer = PillRenderer(resources.displayMetrics.density)
 
-    private var settings = PillSettings()
+    protected var settings = PillSettings()
+        private set
     private var battery: BatterySnapshot? = null
     private var night = false
     private var matchedTint: Int? = null
+    private var tintAnim: ValueAnimator? = null
+    private var tintTarget: Int? = null
     private var active = false
 
     /** Draw solid (sitting on Samsung's battery). */
@@ -73,10 +76,34 @@ class PillView(context: Context) : View(context) {
     fun bind(settings: PillSettings, battery: BatterySnapshot?, night: Boolean, matchedTint: Int? = null) {
         this.settings = settings
         this.night = night
-        this.matchedTint = matchedTint
+        setMatchedTint(matchedTint)
         if (battery != null) setLevel(battery)
         updateAnimations()
         invalidate()
+    }
+
+    /** Cross-fade to a newly sampled icon colour, the way SystemUI fades its own icons. */
+    private fun setMatchedTint(target: Int?) {
+        val from = matchedTint
+        val running = tintAnim?.isRunning == true
+        if (!running && target == from) return
+        if (running && tintTarget == target) return
+        tintAnim?.cancel()
+        tintAnim = null
+        tintTarget = target
+        if (from == null || target == null || !active || !isAttachedToWindow) {
+            matchedTint = target
+            return
+        }
+        tintAnim = ValueAnimator.ofArgb(from, target).apply {
+            duration = TINT_FADE_MS
+            interpolator = DecelerateInterpolator()
+            addUpdateListener {
+                matchedTint = it.animatedValue as Int
+                invalidate()
+            }
+            start()
+        }
     }
 
     fun setActive(active: Boolean) {
@@ -129,15 +156,19 @@ class PillView(context: Context) : View(context) {
     override fun onDetachedFromWindow() {
         super.onDetachedFromWindow()
         levelAnim?.cancel()
+        tintAnim?.end()
         sweepAnim.cancel()
         pulseAnim.cancel()
     }
 
+    /** Current base (icon) colour. */
+    protected fun baseColor() = PillColors.base(settings.colorMode, settings.customColor, night, matchedTint)
+
     override fun onDraw(canvas: Canvas) {
         val b = battery ?: return
-        val base = PillColors.base(settings.colorMode, settings.customColor, night, matchedTint)
-        renderer.draw(
-            canvas, width.toFloat(), height.toFloat(), settings,
+        val base = baseColor()
+        drawContent(
+            canvas, base,
             PillRenderer.Frame(
                 level = shownLevel.coerceIn(0f, 100f),
                 base = base,
@@ -150,8 +181,14 @@ class PillView(context: Context) : View(context) {
         )
     }
 
+    /** Draws one frame; subclasses (the "Own icons" row) draw more around the pill. */
+    protected open fun drawContent(canvas: Canvas, base: Int, frame: PillRenderer.Frame) {
+        renderer.draw(canvas, width.toFloat(), height.toFloat(), settings, frame)
+    }
+
     private companion object {
         const val SWEEP_CYCLE_MS = 3600L
         const val SWEEP_FRACTION = 0.42f
+        const val TINT_FADE_MS = 220L
     }
 }

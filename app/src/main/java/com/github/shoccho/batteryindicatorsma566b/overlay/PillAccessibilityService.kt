@@ -33,7 +33,9 @@ import com.github.shoccho.batteryindicatorsma566b.core.PillStyle
 import com.github.shoccho.batteryindicatorsma566b.core.SettingsRepository
 import com.github.shoccho.batteryindicatorsma566b.core.SystemBatteryIcon
 import com.github.shoccho.batteryindicatorsma566b.core.TintSampler
+import com.github.shoccho.batteryindicatorsma566b.core.Placement
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -74,6 +76,13 @@ class PillAccessibilityService : AccessibilityService() {
     private var lastLogged: List<Box>? = null
     private lateinit var keyguard: KeyguardManager
 
+    // "Own icons" row
+    private var rowView: StatusRowView? = null
+    private var rowParams: WindowManager.LayoutParams? = null
+    private var monitor: StatusMonitor? = null
+    private var monitorJob: Job? = null
+    private var rowCenterY: Int? = null
+
     private val receiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
             when (intent.action) {
@@ -87,12 +96,14 @@ class PillAccessibilityService : AccessibilityService() {
                 }
                 Intent.ACTION_SCREEN_OFF -> {
                     screenOn = false
+                    handler.removeCallbacks(pollRunnable)
                     scheduleScan(0)
                 }
                 Intent.ACTION_SCREEN_ON, Intent.ACTION_USER_PRESENT -> {
                     screenOn = true
                     scheduleScan(0)
-                    requestTint()
+                    tintSoon()
+                    startTintPoll()
                 }
             }
         }
@@ -119,7 +130,8 @@ class PillAccessibilityService : AccessibilityService() {
             s.launch {
                 repo.state.collect {
                     scheduleScan(0)
-                    requestTint()
+                    tintSoon()
+                    startTintPoll()
                 }
             }
             s.launch {
@@ -137,14 +149,19 @@ class PillAccessibilityService : AccessibilityService() {
         when (event.eventType) {
             AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED -> {
                 scheduleScan(60)
-                requestTint()
+                tintSoon()
             }
             AccessibilityEvent.TYPE_WINDOWS_CHANGED -> {
                 scheduleScan(40)
-                requestTint()
+                tintSoon()
             }
-            AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED ->
+            AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED -> {
                 if (event.packageName == SYSUI) scheduleScan(60)
+                // An app changing what's behind the status bar (launcher → app drawer, a dimmed
+                // backdrop, a scrolled page) flips Samsung's icons without any window change.
+                else tintSoon(now = false)
+            }
+            AccessibilityEvent.TYPE_VIEW_SCROLLED -> tintSoon(now = false)
         }
     }
 
@@ -169,10 +186,17 @@ class PillAccessibilityService : AccessibilityService() {
         handler.postDelayed(scanRunnable, delayMs)
     }
 
-    private fun wantCover(s: PillSettings) = s.enabled && s.coverStock && screenOn
+    private fun wantCover(s: PillSettings) = s.enabled && s.placement == Placement.SAMSUNG_SPOT && screenOn
 
     private fun scan() {
         val s = repo.current
+        if (s.enabled && s.placement == Placement.OWN_ICONS) {
+            startMonitor()
+            if (screenOn) syncRow(s) else removeRow()
+        } else {
+            removeRow()
+            stopMonitor()
+        }
         if (!wantCover(s)) {
             clearCovers()
             return
@@ -292,6 +316,119 @@ class PillAccessibilityService : AccessibilityService() {
     private fun rebind() {
         val s = repo.current
         covers.forEach { bindCover(it, s) }
+        rowView?.bind(s, battery, isNight(), _tint.value)
+    }
+
+    // ---- Own icons ----------------------------------------------------------------------------
+
+    private fun startMonitor() {
+        if (monitor != null) return
+        val m = StatusMonitor(this).also { it.start() }
+        monitor = m
+        monitorJob = scope?.launch {
+            m.state.collect { st ->
+                rowView?.let { v ->
+                    v.status = st
+                    layoutRow(repo.current, v)
+                }
+            }
+        }
+    }
+
+    private fun stopMonitor() {
+        monitorJob?.cancel()
+        monitorJob = null
+        monitor?.stop()
+        monitor = null
+    }
+
+    private fun syncRow(s: PillSettings) {
+        val v = rowView ?: addRow() ?: return
+        v.bind(s, battery, isNight(), _tint.value)
+        monitor?.let { v.status = it.state.value }
+        layoutRow(s, v)
+    }
+
+    private fun addRow(): StatusRowView? {
+        val view = StatusRowView(this)
+        val params = WindowManager.LayoutParams(
+            1, 1,
+            WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY,
+            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
+                WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE or
+                WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN or
+                WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
+            PixelFormat.TRANSLUCENT,
+        ).apply {
+            title = "BatteryPillRow"
+            gravity = Gravity.TOP or Gravity.RIGHT
+            layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS
+            fitInsetsTypes = 0
+            windowAnimations = 0
+            alpha = 0f
+        }
+        return try {
+            wm.addView(view, params)
+            rowView = view
+            rowParams = params
+            view
+        } catch (e: Exception) {
+            Log.e(TAG, "Couldn't add row", e)
+            null
+        }
+    }
+
+    private fun removeRow() {
+        rowView?.let { runCatching { wm.removeViewImmediate(it) } }
+        rowView = null
+        rowParams = null
+        monitor?.setPolling(false)
+    }
+
+    /** Right-anchored, vertically centred on the status bar clock; hidden in full screen / open shade. */
+    private fun layoutRow(s: PillSettings, v: StatusRowView) {
+        val p = rowParams ?: return
+        val locked = keyguard.isKeyguardLocked
+        val visible = (statusBarVisible || locked) && !(!locked && shadeExpanded())
+        val w = v.preferredWidth()
+        val h = v.preferredHeight()
+        val cy = rowCenter()
+        val x = (s.rowEndMarginDp * resources.displayMetrics.density).toInt()
+        val alpha = if (visible) s.opacity / 100f else 0f
+        val changed = p.width != w || p.height != h || p.x != x || p.y != cy - h / 2 || p.alpha != alpha
+        p.width = w
+        p.height = h
+        p.x = x
+        p.y = cy - h / 2
+        p.alpha = alpha
+        v.setActive(visible && screenOn)
+        monitor?.setPolling(visible && screenOn && s.rowActivityArrows)
+        if (changed) runCatching { wm.updateViewLayout(v, p) }
+    }
+
+    /** Status bar icon centre line: the clock's centre when visible, else the camera hole's. */
+    private fun rowCenter(): Int {
+        findNodes(CLOCK_ID).firstOrNull { it.top < statusBarHeightPx() }?.let { rowCenterY = it.centerY }
+        return rowCenterY ?: run {
+            val cut = wm.currentWindowMetrics.windowInsets.displayCutout?.boundingRects?.firstOrNull { !it.isEmpty }
+            cut?.centerY() ?: (statusBarHeightPx() / 2)
+        }
+    }
+
+    /** A full-width, tall SystemUI window means the notification shade / quick panel is open. */
+    private fun shadeExpanded(): Boolean {
+        val sb = statusBarHeightPx()
+        val screenW = wm.currentWindowMetrics.bounds.width()
+        return try {
+            windows.any { w ->
+                if (w.type == AccessibilityWindowInfo.TYPE_ACCESSIBILITY_OVERLAY) return@any false
+                w.getBoundsInScreen(rect)
+                val pkg = w.root?.packageName
+                pkg == SYSUI && rect.height() > sb * 3 && rect.width() >= screenW * 0.9f
+            }
+        } catch (e: Exception) {
+            false
+        }
     }
 
     private fun removeCover(cover: Cover) {
@@ -308,6 +445,75 @@ class PillAccessibilityService : AccessibilityService() {
     private val tintRunnable = Runnable {
         shotPending = false
         requestTint()
+    }
+
+    // A "burst" samples as fast as Android allows (~3/s) until things stop changing, so our icons
+    // follow SystemUI's colour fade step by step instead of waiting for it to finish.
+    private var burstStart = 0L
+    private var burstUntil = 0L
+    private var burstFromContent = false
+    private var burstSawChange = false
+    /** Content-only bursts that found nothing back off, so a busy app doesn't keep us shooting. */
+    private var contentCooldownUntil = 0L
+    private var contentCooldownMs = CONTENT_COOLDOWN_MIN_MS
+
+    private val burstRunnable = object : Runnable {
+        override fun run() {
+            val now = SystemClock.uptimeMillis()
+            if (now >= burstUntil) {
+                if (burstFromContent && !burstSawChange) {
+                    contentCooldownUntil = now + contentCooldownMs
+                    contentCooldownMs = (contentCooldownMs * 2).coerceAtMost(CONTENT_COOLDOWN_MAX_MS)
+                }
+                burstUntil = 0L
+                return
+            }
+            requestTint()
+            handler.postDelayed(this, SHOT_INTERVAL_MS)
+        }
+    }
+
+    /**
+     * Something on screen changed. Window changes sample at once and keep sampling for a moment
+     * after the last event; app content changes / scrolls (launcher → app drawer) do the same,
+     * but a burst they start is capped, and backs off when it finds the colour unchanged.
+     */
+    private fun tintSoon(now: Boolean = true) {
+        val t = SystemClock.uptimeMillis()
+        if (now) {
+            contentCooldownUntil = 0L
+            contentCooldownMs = CONTENT_COOLDOWN_MIN_MS
+        } else if (t < contentCooldownUntil) {
+            return
+        }
+        val idle = burstUntil == 0L
+        if (idle) {
+            burstStart = t
+            burstFromContent = !now
+            burstSawChange = false
+        } else if (now) {
+            burstFromContent = false
+        }
+        val cap = burstStart + if (burstFromContent) CONTENT_BURST_MAX_MS else WINDOW_BURST_MAX_MS
+        burstUntil = maxOf(burstUntil, minOf(t + BURST_TAIL_MS, cap))
+        if (idle) {
+            requestTint()
+            handler.postDelayed(burstRunnable, SHOT_INTERVAL_MS)
+        }
+    }
+
+    /** Safety net for changes no event reports (live wallpapers, video behind the bar). */
+    private val pollRunnable = object : Runnable {
+        override fun run() {
+            if (!screenOn || repo.current.colorMode != ColorMode.MATCH || !repo.current.enabled) return
+            if (statusBarVisible) requestTint()
+            handler.postDelayed(this, POLL_MS)
+        }
+    }
+
+    private fun startTintPoll() {
+        handler.removeCallbacks(pollRunnable)
+        handler.postDelayed(pollRunnable, POLL_MS)
     }
 
     /** Screenshots are rate-limited by Android (~1/s), so coalesce requests. */
@@ -333,6 +539,7 @@ class PillAccessibilityService : AccessibilityService() {
                     result.hardwareBuffer.close()
                 }
                 if (sampled != null && sampled != _tint.value) {
+                    burstSawChange = true
                     Log.d(TAG, "status bar icon colour: #%08X".format(sampled))
                     _tint.value = sampled
                     rebind()
@@ -340,7 +547,13 @@ class PillAccessibilityService : AccessibilityService() {
             }
 
             override fun onFailure(errorCode: Int) {
-                Log.d(TAG, "screenshot failed: $errorCode")
+                if (errorCode == ERROR_TAKE_SCREENSHOT_INTERVAL_TIME_SHORT && !shotPending) {
+                    // Asked a hair too early for Android's limit; try again shortly.
+                    shotPending = true
+                    handler.postDelayed(tintRunnable, RETRY_MS)
+                } else {
+                    Log.d(TAG, "screenshot failed: $errorCode")
+                }
             }
         })
     }
@@ -394,8 +607,12 @@ class PillAccessibilityService : AccessibilityService() {
         scope?.cancel()
         scope = null
         handler.removeCallbacksAndMessages(null)
+        burstUntil = 0L
+        shotPending = false
         runCatching { unregisterReceiver(receiver) }
         clearCovers()
+        removeRow()
+        stopMonitor()
     }
 
     companion object {
@@ -407,7 +624,16 @@ class PillAccessibilityService : AccessibilityService() {
         private const val SIGNAL_ID = "$SYSUI:id/mobile_signal"
         private const val MAX_ICON_PX = 400
         private const val MAX_NODES = 1500
-        private const val SHOT_INTERVAL_MS = 1100L
+        /** Android allows an accessibility screenshot every 333 ms. */
+        private const val SHOT_INTERVAL_MS = 340L
+        private const val RETRY_MS = 60L
+        /** Keep sampling this long after the last event (covers SystemUI's colour fade). */
+        private const val BURST_TAIL_MS = 1000L
+        private const val WINDOW_BURST_MAX_MS = 3000L
+        private const val CONTENT_BURST_MAX_MS = 1600L
+        private const val CONTENT_COOLDOWN_MIN_MS = 1500L
+        private const val CONTENT_COOLDOWN_MAX_MS = 12_000L
+        private const val POLL_MS = 4000L
 
         private val _connected = MutableStateFlow(false)
         /** True while the user has this service turned on and it's running. */

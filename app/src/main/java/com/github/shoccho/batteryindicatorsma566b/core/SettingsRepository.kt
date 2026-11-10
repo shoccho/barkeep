@@ -37,6 +37,11 @@ class SettingsRepository private constructor(context: Context) {
         write(next)
     }
 
+    /** Extra SystemUI slots this app hid for "Own icons", so exactly those get un-hidden later. */
+    var weHidSlots: Set<String>
+        get() = prefs.getStringSet(K_WE_HID_SLOTS, emptySet()).orEmpty().toSet()
+        set(value) = prefs.edit { putStringSet(K_WE_HID_SLOTS, value) }
+
     /** Who changed Samsung's battery icon visibility, so it can be put back exactly. */
     var iconOwnership: IconOwnership
         get() = IconOwnership(
@@ -53,7 +58,22 @@ class SettingsRepository private constructor(context: Context) {
         return PillSettings(
             enabled = prefs.getBoolean("enabled", d.enabled),
             style = enumOr(prefs.getString("style", null), d.style),
-            coverStock = prefs.getBoolean("coverStock", d.coverStock),
+            placement = enumOr(
+                prefs.getString("placement", null),
+                // Migrate the earlier on/off "coverStock" switch.
+                if (prefs.getBoolean("coverStock", false)) Placement.SAMSUNG_SPOT else d.placement,
+            ),
+            iconOrder = StatusIcon.parseOrder(prefs.getString("iconOrder", null)),
+            iconsOn = prefs.getString("iconsOn", null)?.let { raw ->
+                raw.split(',').mapNotNull { n -> StatusIcon.entries.firstOrNull { it.name == n } }.toSet()
+            } ?: d.iconsOn,
+            rowIconSizeDp = prefs.getFloat("rowIconSizeDp", d.rowIconSizeDp),
+            rowGapDp = prefs.getFloat("rowGapDp", d.rowGapDp),
+            rowEndMarginDp = prefs.getFloat("rowEndMarginDp", d.rowEndMarginDp),
+            rowWifiGeneration = prefs.getBoolean("rowWifiGeneration", d.rowWifiGeneration),
+            rowActivityArrows = prefs.getBoolean("rowActivityArrows", d.rowActivityArrows),
+            rowNetworkType = prefs.getBoolean("rowNetworkType", d.rowNetworkType),
+            rowSamsungArt = prefs.getBoolean("rowSamsungArt", d.rowSamsungArt),
             coverExtraWidthDp = prefs.getFloat("coverExtraWidthDp", d.coverExtraWidthDp),
             coverExtraHeightDp = prefs.getFloat("coverExtraHeightDp", d.coverExtraHeightDp),
             widthDp = prefs.getFloat("widthDp", d.widthDp),
@@ -86,7 +106,17 @@ class SettingsRepository private constructor(context: Context) {
     private fun write(s: PillSettings) = prefs.edit {
         putBoolean("enabled", s.enabled)
         putString("style", s.style.name)
-        putBoolean("coverStock", s.coverStock)
+        putString("placement", s.placement.name)
+        remove("coverStock")
+        putString("iconOrder", s.iconOrder.joinToString(",") { it.name })
+        putString("iconsOn", s.iconsOn.joinToString(",") { it.name })
+        putFloat("rowIconSizeDp", s.rowIconSizeDp)
+        putFloat("rowGapDp", s.rowGapDp)
+        putFloat("rowEndMarginDp", s.rowEndMarginDp)
+        putBoolean("rowWifiGeneration", s.rowWifiGeneration)
+        putBoolean("rowActivityArrows", s.rowActivityArrows)
+        putBoolean("rowNetworkType", s.rowNetworkType)
+        putBoolean("rowSamsungArt", s.rowSamsungArt)
         putFloat("coverExtraWidthDp", s.coverExtraWidthDp)
         putFloat("coverExtraHeightDp", s.coverExtraHeightDp)
         putFloat("widthDp", s.widthDp)
@@ -119,6 +149,7 @@ class SettingsRepository private constructor(context: Context) {
         private const val PREFS = "pill_settings"
         private const val K_WE_HID_ICON = "internal.weHidSystemIcon"
         private const val K_WE_SHOWED_ICON = "internal.weShowedSystemIcon"
+        private const val K_WE_HID_SLOTS = "internal.weHidSlots"
 
         @Volatile
         private var instance: SettingsRepository? = null

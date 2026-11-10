@@ -25,6 +25,8 @@ import com.github.shoccho.batteryindicatorsma566b.core.PillColors
 import com.github.shoccho.batteryindicatorsma566b.core.PillRenderer
 import com.github.shoccho.batteryindicatorsma566b.core.PillSettings
 import com.github.shoccho.batteryindicatorsma566b.core.PillStyle
+import com.github.shoccho.batteryindicatorsma566b.core.StatusRowRenderer
+import com.github.shoccho.batteryindicatorsma566b.core.StatusState
 
 /**
  * Draws the indicator with the very same [PillRenderer] as the overlay, magnified by [scale],
@@ -94,6 +96,44 @@ fun PillPreview(
                     sweep = sweep,
                     alpha = if (critical) pulsePhase else 1f,
                     opaque = opaque,
+                ),
+            )
+            nc.restore()
+        }
+    }
+}
+
+/** Magnified "Own icons" row with sample icons and the live battery. */
+@Composable
+fun RowPreview(
+    settings: PillSettings,
+    battery: BatterySnapshot,
+    night: Boolean,
+    scale: Float,
+    matchedTint: Int? = null,
+    status: StatusState = StatusState.SAMPLE,
+) {
+    val density = LocalDensity.current.density
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val renderer = remember(density) {
+        StatusRowRenderer(density).apply {
+            art = com.github.shoccho.batteryindicatorsma566b.overlay.SamsungIconArt(context)
+        }
+    }
+    val level by animateFloatAsState(battery.percent.toFloat(), tween(700), label = "rowLevel")
+    val base = PillColors.base(settings.colorMode, settings.customColor, night, matchedTint)
+    val wPx = renderer.width(settings, status)
+    val hPx = renderer.height(settings)
+    Canvas(Modifier.size((wPx / density * scale).dp, (hPx / density * scale).dp).alpha(settings.opacity / 100f)) {
+        drawIntoCanvas { c ->
+            val nc = c.nativeCanvas
+            nc.save()
+            nc.scale(scale, scale)
+            renderer.draw(
+                nc, wPx, hPx, settings, status, base,
+                PillRenderer.Frame(
+                    level = level, base = base, fill = PillColors.fill(settings, base, battery),
+                    plugged = battery.plugged,
                 ),
             )
             nc.restore()

@@ -23,6 +23,7 @@ class BootReceiver : BroadcastReceiver() {
         } else {
             // Pill isn't coming back: put Samsung's battery icon back the way the user had it.
             SystemBatteryIcon.sync(context, repo, want = null)
+            SystemBatteryIcon.syncSlots(context, repo, hide = false)
         }
     }
 }

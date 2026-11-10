@@ -20,6 +20,17 @@ object IconBlacklist {
 
     fun remove(value: String?, slot: String = BATTERY_SLOT): String =
         entries(value).filter { it != slot }.joinToString(",")
+
+    /** Adds every slot not already present; also returns which ones were actually added. */
+    fun addAll(value: String?, slots: Collection<String>): Pair<String, Set<String>> {
+        val current = entries(value)
+        val added = slots.filter { it !in current }.distinct()
+        return (current + added).joinToString(",") to added.toSet()
+    }
+
+    /** Removes exactly [slots] (every occurrence), keeping everything else in order. */
+    fun removeAll(value: String?, slots: Collection<String>): String =
+        entries(value).filter { it !in slots }.joinToString(",")
 }
 
 /**
@@ -93,6 +104,31 @@ object SystemBatteryIcon {
         } catch (e: Exception) {
             Log.w(TAG, "Can't write $KEY", e)
             false
+        }
+    }
+
+    /**
+     * "Own icons": hide Samsung's other right-side icons ([hide] = true), or un-hide exactly the
+     * ones this app hid earlier (false). Slots you had hidden yourself are never touched.
+     */
+    fun syncSlots(context: Context, repo: SettingsRepository, hide: Boolean, slots: List<String> = OWN_ICONS_SLOTS) {
+        if (!hasPermission(context)) return
+        try {
+            val cr = context.contentResolver
+            val current = Settings.Secure.getString(cr, KEY)
+            if (hide) {
+                val (next, added) = IconBlacklist.addAll(current, slots)
+                if (added.isNotEmpty() && Settings.Secure.putString(cr, KEY, next)) {
+                    repo.weHidSlots = repo.weHidSlots + added
+                }
+            } else {
+                val ours = repo.weHidSlots
+                if (ours.isNotEmpty() && Settings.Secure.putString(cr, KEY, IconBlacklist.removeAll(current, ours))) {
+                    repo.weHidSlots = emptySet()
+                }
+            }
+        } catch (e: Exception) {
+            Log.w(TAG, "Can't sync slots", e)
         }
     }
 

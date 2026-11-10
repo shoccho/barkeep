@@ -25,6 +25,7 @@ import com.github.shoccho.batteryindicatorsma566b.core.BatterySnapshot
 import com.github.shoccho.batteryindicatorsma566b.core.Box
 import com.github.shoccho.batteryindicatorsma566b.core.OverlayGeometry
 import com.github.shoccho.batteryindicatorsma566b.core.PillSettings
+import com.github.shoccho.batteryindicatorsma566b.core.Placement
 import com.github.shoccho.batteryindicatorsma566b.core.SettingsRepository
 import com.github.shoccho.batteryindicatorsma566b.core.SystemBatteryIcon
 import com.github.shoccho.batteryindicatorsma566b.core.WindowSpec
@@ -189,6 +190,7 @@ class OverlayService : Service() {
             return
         }
         SystemBatteryIcon.sync(this, repo, wantSystemIconHidden(s))
+        SystemBatteryIcon.syncSlots(this, repo, hide = ownIconsActive(s))
         refreshWindow()
     }
 
@@ -255,18 +257,23 @@ class OverlayService : Service() {
     private fun isNight() =
         (resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES
 
-    /** "Samsung's spot" is live: the accessibility helper draws the pill, this window steps aside. */
-    private fun coverActive(s: PillSettings) = s.coverStock && PillAccessibilityService.connected.value
+    /** The accessibility helper draws ("Samsung's spot" / "Own icons"), so this window steps aside. */
+    private fun coverActive(s: PillSettings) =
+        s.placement != Placement.FREE && PillAccessibilityService.connected.value
 
     /**
      * Samsung's battery icon: must stay visible under the cover (it holds the rightmost slot);
-     * hidden in free placement if asked; otherwise left as the user had it.
+     * hidden for "Own icons" (we draw the whole row); in free placement hidden only if asked;
+     * otherwise left as the user had it.
      */
     private fun wantSystemIconHidden(s: PillSettings): Boolean? = when {
-        coverActive(s) -> false
+        coverActive(s) && s.placement == Placement.SAMSUNG_SPOT -> false
+        coverActive(s) && s.placement == Placement.OWN_ICONS -> true
         s.hideSystemIcon -> true
         else -> null
     }
+
+    private fun ownIconsActive(s: PillSettings) = coverActive(s) && s.placement == Placement.OWN_ICONS
 
     override fun onDestroy() {
         scope?.cancel()
@@ -279,6 +286,7 @@ class OverlayService : Service() {
         view = null
         params = null
         SystemBatteryIcon.sync(this, repo, want = null)
+        SystemBatteryIcon.syncSlots(this, repo, hide = false)
         _running.value = false
         super.onDestroy()
     }

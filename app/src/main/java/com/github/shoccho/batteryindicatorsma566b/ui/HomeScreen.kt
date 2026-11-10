@@ -46,6 +46,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
@@ -74,6 +77,7 @@ import com.github.shoccho.batteryindicatorsma566b.core.OverlayGeometry
 import com.github.shoccho.batteryindicatorsma566b.core.PillColors
 import com.github.shoccho.batteryindicatorsma566b.core.PillSettings
 import com.github.shoccho.batteryindicatorsma566b.core.PillStyle
+import com.github.shoccho.batteryindicatorsma566b.core.Placement
 import com.github.shoccho.batteryindicatorsma566b.core.SettingsRepository
 import com.github.shoccho.batteryindicatorsma566b.core.SystemBatteryIcon
 import com.github.shoccho.batteryindicatorsma566b.overlay.OverlayService
@@ -147,7 +151,13 @@ fun HomeScreen() {
             ),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            item { HeroCard(settings, liveBattery, screen, tint, coverLive = settings.coverStock && a11yConnected) }
+            item {
+                HeroCard(
+                    settings, liveBattery, screen, tint,
+                    coverLive = settings.placement == Placement.SAMSUNG_SPOT && a11yConnected,
+                    rowLive = settings.placement == Placement.OWN_ICONS && a11yConnected,
+                )
+            }
             item { MasterSwitch(settings.enabled, running, permissions.overlay, setEnabled) }
             if (!permissions.overlay || !permissions.unrestricted || !permissions.secureSettings) {
                 item { SetupSection(permissions) }
@@ -184,6 +194,7 @@ private fun HeroCard(
     screen: ScreenInfo,
     tint: Int?,
     coverLive: Boolean,
+    rowLive: Boolean,
 ) {
     var backdrop by rememberSaveable { mutableStateOf(Backdrop.PHOTO) }
     var simulate by rememberSaveable { mutableStateOf(Simulate.LIVE) }
@@ -220,7 +231,9 @@ private fun HeroCard(
                 PillStyle.CAMERA_RING, PillStyle.DOT -> 3.5f
                 else -> 4.5f
             }
-            if (coverLive) {
+            if (rowLive) {
+                RowPreview(settings, shown, night, 2.6f, matchedTint = tint)
+            } else if (coverLive) {
                 PillPreview(
                     settings.copy(style = PillStyle.CAPSULE, contrastRim = false, opacity = 100,
                         widthDp = PillSettings.STOCK_WIDTH_DP, heightDp = PillSettings.STOCK_HEIGHT_DP),
@@ -381,7 +394,10 @@ private fun StyleSection(
     val night = androidx.compose.foundation.isSystemInDarkTheme()
     val battery = live ?: BatterySnapshot(percent = 76, plugged = false)
     Section("Style") {
-        if (settings.coverStock) {
+        if (settings.placement == Placement.OWN_ICONS) {
+            Hint("In Own icons the row uses Capsule, Classic or Dot (others show as Capsule).")
+        }
+        if (settings.placement == Placement.SAMSUNG_SPOT) {
             Hint("In Samsung's spot the pill is always a solid Capsule, so the number underneath can't show through.")
         }
         LazyRow(
@@ -435,6 +451,7 @@ private fun StyleSection(
 
 // ---- Placement ---------------------------------------------------------------------------------
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun PlacementSection(
     s: PillSettings,
@@ -445,12 +462,28 @@ private fun PlacementSection(
     refreshPermissions: () -> Unit,
 ) {
     Section("Position") {
-        Segmented(listOf(false, true), s.coverStock, { if (it) "Samsung's spot" else "Free" }, { v ->
-            update { it.copy(coverStock = v) }
-        })
-        if (s.coverStock) {
-            CoverControls(s, p, a11yConnected, update, refreshPermissions)
-            return@Section
+        FlowRow(
+            Modifier.padding(horizontal = 20.dp, vertical = 6.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            Placement.entries.forEach { pl ->
+                FilterChip(
+                    selected = s.placement == pl,
+                    onClick = { update { it.copy(placement = pl) } },
+                    label = { Text(pl.label) },
+                )
+            }
+        }
+        when (s.placement) {
+            Placement.SAMSUNG_SPOT -> {
+                CoverControls(s, p, a11yConnected, update, refreshPermissions)
+                return@Section
+            }
+            Placement.OWN_ICONS -> {
+                OwnIconsControls(s, p, a11yConnected, update, refreshPermissions)
+                return@Section
+            }
+            Placement.FREE -> Unit
         }
         when (s.style) {
             PillStyle.CAMERA_RING -> {
@@ -538,10 +571,24 @@ private fun CoverControls(
         "The pill sits exactly on Samsung's battery, hiding its number. Samsung's icon keeps the " +
             "rightmost slot, so network and Wi-Fi never move or overlap. Follows it onto the lock screen too.",
     )
+    AccessibilityRow(p, a11yConnected, refreshPermissions)
+    if (!a11yConnected) {
+        Hint("Until it's on, the pill stays in its free position.")
+    }
+    SliderRow("Cover width", s.coverExtraWidthDp, PillSettings.COVER_EXTRA_RANGE,
+        { v -> update { it.copy(coverExtraWidthDp = v) } }, step = 0.25f, format = { "+" + formatDp(it) })
+    SliderRow("Cover height", s.coverExtraHeightDp, PillSettings.COVER_EXTRA_RANGE,
+        { v -> update { it.copy(coverExtraHeightDp = v) } }, step = 0.25f, format = { "+" + formatDp(it) })
+    Hint("Grow these if a sliver of Samsung's icon peeks out around the edge.")
+}
+
+@Composable
+private fun AccessibilityRow(p: Permissions, a11yConnected: Boolean, refreshPermissions: () -> Unit) {
+    val context = LocalContext.current
     SetupRow(
         done = a11yConnected,
         title = if (p.accessibility && !a11yConnected) "Accessibility: starting…" else "Accessibility service",
-        body = "Lets the pill find Samsung's icon and draw above the status bar. " +
+        body = "Lets the pill draw above the status bar and see where Samsung's icons are. " +
             "It only reads the status bar — nothing from your apps.",
         action = if (p.secureSettings) "Turn on" else "Open",
     ) {
@@ -551,14 +598,87 @@ private fun CoverControls(
             context.startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
         }
     }
-    if (!a11yConnected) {
-        Hint("Until it's on, the pill stays in its free position.")
+}
+
+@Composable
+private fun OwnIconsControls(
+    s: PillSettings,
+    p: Permissions,
+    a11yConnected: Boolean,
+    update: ((PillSettings) -> PillSettings) -> Unit,
+    refreshPermissions: () -> Unit,
+) {
+    val permissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions(),
+    ) { refreshPermissions() }
+    Hint(
+        "Samsung's sound, Wi-Fi, signal and other right-side icons and its battery are hidden; " +
+            "the app draws its own row in your order, pill rightmost. Leaving this mode brings " +
+            "Samsung's icons back exactly as they were.",
+    )
+    AccessibilityRow(p, a11yConnected, refreshPermissions)
+    if (!p.secureSettings) {
+        Hint("Also needs the one-time adb grant from Setup, to hide Samsung's icons.")
     }
-    SliderRow("Cover width", s.coverExtraWidthDp, PillSettings.COVER_EXTRA_RANGE,
-        { v -> update { it.copy(coverExtraWidthDp = v) } }, step = 0.25f, format = { "+" + formatDp(it) })
-    SliderRow("Cover height", s.coverExtraHeightDp, PillSettings.COVER_EXTRA_RANGE,
-        { v -> update { it.copy(coverExtraHeightDp = v) } }, step = 0.25f, format = { "+" + formatDp(it) })
-    Hint("Grow these if a sliver of Samsung's icon peeks out around the edge.")
+    SetupRow(
+        done = p.phone && p.nearby,
+        title = "Phone & Nearby devices (optional)",
+        body = "Phone shows both SIMs and the 5G/4G label; Nearby devices shows when Bluetooth is connected.",
+        action = "Allow",
+    ) {
+        permissionLauncher.launch(
+            arrayOf(android.Manifest.permission.READ_PHONE_STATE, android.Manifest.permission.BLUETOOTH_CONNECT),
+        )
+    }
+    Hint("Hidden for good in this mode (an app can't detect them): satellite, screen recording, location-in-use, VoLTE.")
+
+    Text(
+        "Icons, left to right",
+        style = MaterialTheme.typography.titleSmall,
+        modifier = Modifier.padding(start = 20.dp, top = 12.dp, bottom = 4.dp),
+    )
+    s.iconOrder.forEachIndexed { index, icon ->
+        Row(
+            Modifier.fillMaxWidth().padding(start = 12.dp, end = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Switch(
+                checked = icon in s.iconsOn,
+                onCheckedChange = { on ->
+                    update { it.copy(iconsOn = if (on) it.iconsOn + icon else it.iconsOn - icon) }
+                },
+                modifier = Modifier.padding(horizontal = 8.dp),
+            )
+            Text(icon.label, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f))
+            TextButton(enabled = index > 0, onClick = { update { it.copy(iconOrder = it.iconOrder.move(index, -1)) } }) {
+                Text("↑", style = MaterialTheme.typography.titleLarge)
+            }
+            TextButton(
+                enabled = index < s.iconOrder.lastIndex,
+                onClick = { update { it.copy(iconOrder = it.iconOrder.move(index, 1)) } },
+            ) { Text("↓", style = MaterialTheme.typography.titleLarge) }
+        }
+    }
+    Hint("The battery pill always sits at the far right.")
+    SliderRow("Icon size", s.rowIconSizeDp, PillSettings.ROW_ICON_RANGE, { v -> update { it.copy(rowIconSizeDp = v) } })
+    SliderRow("Spacing", s.rowGapDp, PillSettings.ROW_GAP_RANGE, { v -> update { it.copy(rowGapDp = v) } }, step = 0.25f)
+    SliderRow("Distance from right edge", s.rowEndMarginDp, PillSettings.ROW_END_RANGE, { v -> update { it.copy(rowEndMarginDp = v) } })
+    SliderRow("Pill width", s.widthDp, PillSettings.WIDTH_RANGE, { v -> update { it.copy(widthDp = v) } })
+    SliderRow("Pill height", s.heightDp, PillSettings.HEIGHT_RANGE, { v -> update { it.copy(heightDp = v) } })
+    SwitchRow(
+        "Samsung icon art", s.rowSamsungArt, { v -> update { it.copy(rowSamsungArt = v) } },
+        subtitle = "Uses One UI's own icons from your phone; off = Battery Pill's drawn icons",
+    )
+    SwitchRow("Wi-Fi generation (5 / 6 / 7)", s.rowWifiGeneration, { v -> update { it.copy(rowWifiGeneration = v) } })
+    SwitchRow("Data activity arrows", s.rowActivityArrows, { v -> update { it.copy(rowActivityArrows = v) } })
+    SwitchRow("Network type (5G / 4G)", s.rowNetworkType, { v -> update { it.copy(rowNetworkType = v) } },
+        subtitle = "Shown while mobile data carries the internet")
+}
+
+private fun <T> List<T>.move(index: Int, by: Int): List<T> {
+    val target = (index + by).coerceIn(0, lastIndex)
+    if (target == index) return this
+    return toMutableList().apply { add(target, removeAt(index)) }
 }
 
 // ---- Colour ------------------------------------------------------------------------------------
@@ -655,11 +775,11 @@ private fun BehaviourSection(s: PillSettings, p: Permissions, update: ((PillSett
         SwitchRow(
             "Hide Samsung's battery", s.hideSystemIcon, { v -> update { it.copy(hideSystemIcon = v) } },
             subtitle = when {
-                s.coverStock -> "Free position only — in Samsung's spot the pill sits on top of it instead"
+                s.placement != Placement.FREE -> "Free position only — the other positions manage Samsung's icons themselves"
                 p.secureSettings -> "Restored automatically when the pill turns off"
                 else -> "Needs the one-time adb grant in Setup"
             },
-            enabled = p.secureSettings && !s.coverStock,
+            enabled = p.secureSettings && s.placement == Placement.FREE,
         )
     }
 }

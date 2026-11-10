@@ -9,6 +9,16 @@ enum class PillStyle(val label: String, val blurb: String) {
     EDGE_LINE("Edge line", "Thin bar along the top edge"),
 }
 
+/** Where the pill lives. */
+enum class Placement(val label: String) {
+    /** Anywhere you like (app overlay). */
+    FREE("Free"),
+    /** Exactly over Samsung's battery, hiding its number (accessibility overlay). */
+    SAMSUNG_SPOT("Samsung's spot"),
+    /** Hide Samsung's right-side icons and draw our own row, pill rightmost (accessibility overlay). */
+    OWN_ICONS("Own icons"),
+}
+
 /** Which side of the screen the pill is measured from. */
 enum class Anchor(val label: String) { LEFT("Left"), CENTER("Center"), RIGHT("Right") }
 
@@ -31,14 +41,22 @@ data class PillSettings(
     val enabled: Boolean = false,
     val style: PillStyle = PillStyle.CAPSULE,
 
-    /**
-     * Sit exactly on top of Samsung's own battery icon (covering its number) instead of a free
-     * position. Samsung's icon keeps its rightmost slot, so network/Wi-Fi icons never move.
-     * Needs the accessibility service; always drawn as an opaque Capsule.
-     */
-    val coverStock: Boolean = false,
+    /** See [Placement]. SAMSUNG_SPOT and OWN_ICONS need the accessibility service. */
+    val placement: Placement = Placement.FREE,
     val coverExtraWidthDp: Float = 1f,
     val coverExtraHeightDp: Float = 1f,
+
+    // Own icons row
+    val iconOrder: List<StatusIcon> = StatusIcon.DEFAULT_ORDER,
+    val iconsOn: Set<StatusIcon> = StatusIcon.entries.filter { it.defaultOn }.toSet(),
+    val rowIconSizeDp: Float = 13f,
+    val rowGapDp: Float = 2.5f,
+    val rowEndMarginDp: Float = 15f,
+    val rowWifiGeneration: Boolean = true,
+    val rowActivityArrows: Boolean = true,
+    val rowNetworkType: Boolean = true,
+    /** Use the phone's own Samsung status icons in the row (falls back to drawn glyphs). */
+    val rowSamsungArt: Boolean = true,
 
     // Pill geometry (Capsule / Classic / Dot)
     val widthDp: Float = 26f,
@@ -75,6 +93,8 @@ data class PillSettings(
     val startOnBoot: Boolean = true,
     val hideSystemIcon: Boolean = false,
 ) {
+    val coverStock: Boolean get() = placement == Placement.SAMSUNG_SPOT
+
     companion object {
         val WIDTH_RANGE = 10f..60f
         val HEIGHT_RANGE = 5f..30f
@@ -87,6 +107,9 @@ data class PillSettings(
         val RING_THICKNESS_RANGE = 1f..6f
         val RING_GAP_RANGE = -3f..8f
         val COVER_EXTRA_RANGE = -3f..6f
+        val ROW_ICON_RANGE = 8f..20f
+        val ROW_GAP_RANGE = 0f..8f
+        val ROW_END_RANGE = 0f..60f
         val LOW_RANGE = 5..50
         val OPACITY_RANGE = 20..100
 

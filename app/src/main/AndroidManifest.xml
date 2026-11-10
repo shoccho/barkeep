@@ -11,10 +11,26 @@
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <!-- Lets the app ask for Samsung's "Unrestricted" battery mode so it isn't put to sleep. -->
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
+    <!-- "Own icons": read the states the app redraws (all optional except network/Wi-Fi state). -->
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <uses-permission android:name="android.permission.NFC" />
+    <uses-permission android:name="android.permission.READ_PHONE_STATE" />
+    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
+    <uses-feature android:name="android.hardware.telephony" android:required="false" />
+    <uses-feature android:name="android.hardware.nfc" android:required="false" />
+    <uses-feature android:name="android.hardware.bluetooth" android:required="false" />
+
     <!-- Optional, granted only over adb: hide Samsung's own battery icon while the pill is on. -->
     <uses-permission
         android:name="android.permission.WRITE_SECURE_SETTINGS"
         tools:ignore="ProtectedPermissions" />
+
+    <!-- "Own icons" borrows the status icon drawables installed with One UI (runtime lookup only). -->
+    <queries>
+        <package android:name="com.android.systemui" />
+        <package android:name="com.samsung.android.nfc" />
+    </queries>
 
     <application
         android:allowBackup="true"

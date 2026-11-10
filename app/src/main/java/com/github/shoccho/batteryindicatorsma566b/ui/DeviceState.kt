@@ -30,6 +30,10 @@ data class Permissions(
     val unrestricted: Boolean,
     val secureSettings: Boolean,
     val accessibility: Boolean,
+    /** Phone: both SIMs and the 5G/LTE label in "Own icons". */
+    val phone: Boolean,
+    /** Nearby devices: Bluetooth "connected" state in "Own icons". */
+    val nearby: Boolean,
 ) {
     companion object {
         fun read(context: Context) = Permissions(
@@ -38,6 +42,10 @@ data class Permissions(
                 .isIgnoringBatteryOptimizations(context.packageName),
             secureSettings = SystemBatteryIcon.hasPermission(context),
             accessibility = PillAccessibilityService.isEnabledInSettings(context),
+            phone = context.checkSelfPermission(android.Manifest.permission.READ_PHONE_STATE) ==
+                android.content.pm.PackageManager.PERMISSION_GRANTED,
+            nearby = context.checkSelfPermission(android.Manifest.permission.BLUETOOTH_CONNECT) ==
+                android.content.pm.PackageManager.PERMISSION_GRANTED,
         )
     }
 }
