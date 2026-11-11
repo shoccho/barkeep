@@ -33,13 +33,13 @@ enum class ColorMode(val label: String) {
 
 /**
  * Everything the user can tune. Sizes are in dp so the pill looks the same if display
- * size (density) changes. Defaults put a stock-sized capsule just right of the camera hole on
+ * size (density) changes. Defaults put a stock-sized Classic battery just right of the camera hole on
  * the Galaxy A56: Samsung's own battery spot is taken by the signal icons once its battery
  * icon is hidden, while the strip beside the camera is always empty.
  */
 data class PillSettings(
     val enabled: Boolean = false,
-    val style: PillStyle = PillStyle.CAPSULE,
+    val style: PillStyle = PillStyle.CLASSIC,
 
     /** See [Placement]. SAMSUNG_SPOT and OWN_ICONS need the accessibility service. */
     val placement: Placement = Placement.FREE,

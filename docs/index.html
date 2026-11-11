@@ -379,8 +379,8 @@ footer .wrap { display: flex; flex-wrap: wrap; gap: 12px 24px; align-items: cent
     <div class="reveal">
       <div class="stage"><div class="bar" data-placement="own" data-view="zoom"></div></div>
       <div class="style-tabs" role="group" aria-label="Indicator style">
-        <button type="button" data-style="capsule" aria-pressed="true"><b>Capsule</b><span>One UI-style solid pill</span></button>
-        <button type="button" data-style="classic" aria-pressed="false"><b>Classic</b><span>Outlined battery with a tip</span></button>
+        <button type="button" data-style="capsule" aria-pressed="false"><b>Capsule</b><span>One UI-style solid pill</span></button>
+        <button type="button" data-style="classic" aria-pressed="true"><b>Classic</b><span>Outlined battery with a tip</span></button>
         <button type="button" data-style="dot" aria-pressed="false"><b>Dot</b><span>Tiny circular gauge</span></button>
         <button type="button" data-style="ring" aria-pressed="false"><b>Camera ring</b><span>Wraps the punch-hole camera</span></button>
         <button type="button" data-style="edge" aria-pressed="false"><b>Edge line</b><span>Thin bar along the top edge</span></button>
@@ -671,7 +671,7 @@ footer .wrap { display: flex; flex-wrap: wrap; gap: 12px 24px; align-items: cent
     ['wifi', 'Wi-Fi'], ['mobile', 'Mobile'],
   ];
   const S = {
-    style: 'capsule', level: 72, power: 'battery',
+    style: 'classic', level: 72, power: 'battery',
     color: 'theme', custom: '#4FC3F7', stateColors: true, rim: false, opacity: 100,
     backdrop: 'dark', bolt: true, shimmer: true, pulse: true, low: 15,
     order: ICONS.map(i => i[0]), shown: new Set(['mute', 'wifi', 'mobile']),
