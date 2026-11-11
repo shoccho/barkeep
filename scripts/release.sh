@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Build the signed release APK and publish it as a GitHub release.
 #
-#   scripts/release.sh v1.0 "Release notes…"
+#   scripts/release.sh v1.1 "Release notes…"
 #
 # The asset is always named Barkeep.apk so the website's link
 #   https://github.com/shoccho/barkeep/releases/latest/download/Barkeep.apk
@@ -9,7 +9,7 @@
 #
 # Needs keystore.properties (see app/build.gradle.kts) and gh logged in to the
 # account that owns the repo. If gh's active account is a different one, run:
-#   GH_TOKEN="$(gh auth token --user shoccho)" scripts/release.sh v1.0
+#   GH_TOKEN="$(gh auth token --user shoccho)" scripts/release.sh v1.1
 set -euo pipefail
 
 TAG="${1:?usage: scripts/release.sh <tag> [notes]}"

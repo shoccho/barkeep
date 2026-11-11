@@ -176,7 +176,7 @@ fun HomeScreen() {
             item { ResetButton { repo.update { PillSettings(enabled = it.enabled) } } }
             item {
                 Text(
-                    "Made for Galaxy A56 · One UI 9 · v1.0",
+                    "Made for Galaxy A56 · One UI 8.5 & 9 · v1.1",
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.outline,
                     modifier = Modifier.fillMaxWidth().padding(top = 8.dp),

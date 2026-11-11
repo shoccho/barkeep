@@ -2,7 +2,7 @@
 
 <h1 align="center">Barkeep</h1>
 <p align="center"><b>Your status bar, kept your way.</b><br>
-A number-free battery pill and a status icon row you arrange yourself, for Samsung Galaxy phones on One UI 9.</p>
+A number-free battery pill and a status icon row you arrange yourself, for Samsung Galaxy phones on One UI 8.5 and 9.</p>
 
 <p align="center">
   <a href="https://shoccho.github.io/barkeep/">Website</a> ·
@@ -23,7 +23,7 @@ One UI 9 only lets you show the battery with the percentage. Barkeep draws a bat
 
 ## Install
 
-Download [`Barkeep.apk`](https://github.com/shoccho/barkeep/releases/latest/download/Barkeep.apk) from the latest release and open it. Requires Android 17 (One UI 9); built and tuned on a Galaxy A56.
+Download [`Barkeep.apk`](https://github.com/shoccho/barkeep/releases/latest/download/Barkeep.apk) from the latest release and open it. Requires Android 16 or later (One UI 8.5 or 9); built and tuned on a Galaxy A56.
 
 Optional one-time adb grant, so Barkeep can hide Samsung's icons and restore them later:
 
