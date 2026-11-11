@@ -40,7 +40,7 @@
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/Theme.BatteryIndicatorSMA566B">
+        android:theme="@style/Theme.Barkeep">
 
         <activity
             android:name=".ui.MainActivity"
@@ -83,7 +83,7 @@
         <service
             android:name=".overlay.PillAccessibilityService"
             android:exported="true"
-            android:label="Battery Pill"
+            android:label="@string/app_name"
             android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
             <intent-filter>
                 <action android:name="android.accessibilityservice.AccessibilityService" />

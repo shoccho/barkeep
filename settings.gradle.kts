@@ -22,5 +22,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "BatteryIndicatorSMA566B"
+rootProject.name = "Barkeep"
 include(":app")

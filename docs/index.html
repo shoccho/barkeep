@@ -1,0 +1,967 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Barkeep — your status bar, kept your way</title>
+<meta name="description" content="Barkeep gives Samsung Galaxy phones on One UI 9 a battery pill without the number, five indicator styles, a re-orderable status icon row, colours that match your icons, and live battery stats. No internet permission.">
+<meta name="theme-color" content="#0B0A1A">
+<meta property="og:title" content="Barkeep — your status bar, kept your way">
+<meta property="og:description" content="A number-free battery pill and a status bar you arrange yourself, for Samsung Galaxy on One UI 9.">
+<meta property="og:image" content="icon-512.png">
+<meta property="og:type" content="website">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<style>
+:root {
+  color-scheme: dark;
+  --bg: #0B0A1A;
+  --bg-2: #100E24;
+  --surface: #15132E;
+  --surface-2: #1D1A3F;
+  --line: rgba(255, 255, 255, .08);
+  --line-2: rgba(255, 255, 255, .14);
+  --text: #EEEDFB;
+  --muted: #A9A6CC;
+  --faint: #77739C;
+  --mint: #7DF9CF;
+  --green: #2FD483;
+  --indigo: #4B3BD6;
+  --violet: #9C8CFF;
+  --amber: #FFB300;
+  --red: #FF3B30;
+  --radius: 22px;
+  --gutter: 16px;
+  --max: 1120px;
+  --font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0; background: var(--bg); color: var(--text); font-family: var(--font);
+  font-size: 16px; line-height: 1.6; overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+a { color: var(--mint); text-decoration: none; }
+a:hover { text-decoration: underline; }
+img, svg { display: block; max-width: 100%; }
+button { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--mint); outline-offset: 3px; border-radius: 8px; }
+.wrap { max-width: var(--max); margin: 0 auto; padding: 0 var(--gutter); }
+
+/* ---------- Nav ---------- */
+.nav {
+  position: sticky; top: 0; z-index: 20;
+  background: rgba(11, 10, 26, .72); backdrop-filter: saturate(160%) blur(14px);
+  -webkit-backdrop-filter: saturate(160%) blur(14px);
+  border-bottom: 1px solid var(--line);
+}
+.nav .wrap { display: flex; align-items: center; gap: 16px; height: 60px; }
+.brand { display: flex; align-items: center; gap: 10px; color: var(--text); font-weight: 700; font-size: 18px; letter-spacing: -.01em; }
+.brand:hover { text-decoration: none; }
+.brand img { width: 30px; height: 30px; }
+.nav-links { display: flex; gap: 22px; margin-left: auto; }
+.nav-links a { color: var(--muted); font-size: 15px; }
+.nav-links a:hover { color: var(--text); text-decoration: none; }
+@media (max-width: 720px) { .nav-links { display: none; } .nav .btn { margin-left: auto; } }
+
+/* ---------- Buttons ---------- */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+  padding: 12px 20px; border-radius: 999px; font-weight: 650; font-size: 15px;
+  border: 1px solid transparent; cursor: pointer; white-space: nowrap; transition: transform .15s, box-shadow .2s, background .2s;
+}
+.btn:hover { text-decoration: none; transform: translateY(-1px); }
+.btn-primary { background: linear-gradient(135deg, var(--mint), var(--green)); color: #062016; box-shadow: 0 8px 30px -8px rgba(47, 212, 131, .55); }
+.btn-primary:hover { box-shadow: 0 12px 36px -8px rgba(47, 212, 131, .7); }
+.btn-ghost { background: rgba(255, 255, 255, .05); border-color: var(--line-2); color: var(--text); }
+.btn-ghost:hover { background: rgba(255, 255, 255, .09); }
+.btn-sm { padding: 8px 14px; font-size: 14px; }
+.btn svg { width: 18px; height: 18px; flex: none; }
+
+/* ---------- Hero ---------- */
+.hero { position: relative; padding: 64px 0 40px; overflow: hidden; }
+.hero::before {
+  content: ""; position: absolute; inset: -40% -20% auto -20%; height: 900px; z-index: -1;
+  background:
+    radial-gradient(40% 40% at 70% 35%, rgba(60, 240, 176, .16), transparent 70%),
+    radial-gradient(45% 45% at 25% 25%, rgba(75, 59, 214, .45), transparent 70%);
+}
+.hero-grid { display: grid; grid-template-columns: 1.05fr 1fr; gap: 48px; align-items: center; }
+@media (max-width: 900px) { .hero-grid { grid-template-columns: 1fr; gap: 36px; } .hero { padding-top: 40px; } }
+.eyebrow {
+  display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px; border-radius: 999px;
+  background: rgba(125, 249, 207, .08); border: 1px solid rgba(125, 249, 207, .22);
+  color: var(--mint); font-size: 13px; font-weight: 600; letter-spacing: .01em;
+}
+.eyebrow i { width: 7px; height: 7px; border-radius: 50%; background: var(--mint); box-shadow: 0 0 10px var(--mint); }
+h1 {
+  font-size: clamp(40px, 7vw, 68px); line-height: 1.02; letter-spacing: -.035em; margin: 18px 0 18px; font-weight: 800;
+}
+h1 .grad { background: linear-gradient(100deg, #fff 10%, var(--violet) 55%, var(--mint) 95%); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.lead { font-size: clamp(17px, 2.1vw, 20px); color: var(--muted); max-width: 34em; margin: 0 0 28px; }
+.lead strong { color: var(--text); font-weight: 600; }
+.cta { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+.release-line { margin-top: 14px; font-size: 13.5px; color: var(--faint); min-height: 1.6em; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 26px; }
+.chip { font-size: 13px; color: var(--muted); padding: 6px 12px; border-radius: 999px; border: 1px solid var(--line-2); background: rgba(255, 255, 255, .03); }
+
+/* ---------- Phone mock ---------- */
+.phone {
+  position: relative; border-radius: 34px; padding: 10px; background: linear-gradient(160deg, #2a2850, #121027);
+  box-shadow: 0 40px 80px -30px rgba(0, 0, 0, .8), inset 0 0 0 1px rgba(255, 255, 255, .08);
+}
+.screen { border-radius: 26px; overflow: hidden; background: #08070f; }
+.bar svg { width: 100%; height: auto; }
+.screen .bar { border-bottom: 1px solid rgba(255,255,255,.04); }
+.zoom { padding: 22px 16px 8px; }
+.zoom-label { font-size: 12px; color: var(--faint); text-transform: uppercase; letter-spacing: .1em; margin: 0 4px 10px; display: flex; justify-content: space-between; }
+.zoom .bar { border-radius: 18px; overflow: hidden; box-shadow: inset 0 0 0 1px rgba(255,255,255,.06); }
+.controls { padding: 18px 16px 20px; display: grid; gap: 14px; }
+.seg { display: flex; flex-wrap: wrap; gap: 6px; padding: 4px; background: rgba(255, 255, 255, .04); border: 1px solid var(--line); border-radius: 14px; }
+.seg button {
+  flex: 1 1 auto; border: 0; background: transparent; padding: 8px 10px; border-radius: 10px; cursor: pointer;
+  font-size: 13.5px; font-weight: 600; color: var(--muted); transition: background .2s, color .2s;
+}
+.seg button[aria-pressed="true"] { background: var(--surface-2); color: var(--text); box-shadow: inset 0 0 0 1px var(--line-2); }
+.range { display: flex; align-items: center; gap: 12px; font-size: 13.5px; color: var(--muted); }
+.range label { min-width: 72px; }
+.range output { min-width: 42px; text-align: right; color: var(--text); font-variant-numeric: tabular-nums; font-weight: 600; }
+input[type=range] { flex: 1; accent-color: var(--mint); min-width: 0; }
+
+/* ---------- Sections ---------- */
+section { padding: 72px 0; }
+.sec-head { max-width: 680px; margin-bottom: 36px; }
+.kicker { color: var(--mint); font-size: 13px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
+h2 { font-size: clamp(30px, 4.6vw, 44px); line-height: 1.1; letter-spacing: -.03em; margin: 10px 0 14px; font-weight: 800; }
+h3 { font-size: 19px; letter-spacing: -.01em; margin: 0 0 6px; line-height: 1.3; }
+.sec-head p { color: var(--muted); font-size: 17.5px; margin: 0; }
+.card {
+  background: linear-gradient(180deg, rgba(255,255,255,.035), rgba(255,255,255,.015));
+  border: 1px solid var(--line); border-radius: var(--radius); padding: 24px;
+}
+.card p { color: var(--muted); margin: 0; font-size: 15.5px; }
+.grid-2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.grid-3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+.grid-4 { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
+@media (max-width: 960px) { .grid-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); } .grid-3 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 640px) { .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; } section { padding: 56px 0; } }
+.split { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; align-items: center; }
+@media (max-width: 900px) { .split { grid-template-columns: 1fr; } }
+.ico {
+  width: 44px; height: 44px; border-radius: 13px; display: grid; place-items: center; margin-bottom: 16px;
+  background: linear-gradient(140deg, rgba(156,140,255,.22), rgba(125,249,207,.12)); border: 1px solid var(--line-2);
+}
+.ico svg { width: 22px; height: 22px; color: var(--mint); }
+.stage { background: #08070f; border-radius: 18px; overflow: hidden; box-shadow: inset 0 0 0 1px var(--line); }
+.stage + .caption { margin-top: 10px; font-size: 13.5px; color: var(--faint); }
+
+/* Problem strip */
+.compare { display: grid; grid-template-columns: 1fr auto 1fr; gap: 18px; align-items: center; }
+@media (max-width: 640px) { .compare { grid-template-columns: 1fr; } .compare .arrow { transform: rotate(90deg); justify-self: center; } }
+.compare .arrow { color: var(--faint); }
+.compare .tag { font-size: 12px; text-transform: uppercase; letter-spacing: .1em; color: var(--faint); margin-bottom: 8px; }
+
+/* Styles picker */
+.style-tabs { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; margin-top: 18px; }
+@media (max-width: 640px) { .style-tabs { grid-template-columns: repeat(2, minmax(0, 1fr)); } .style-tabs button:last-child { grid-column: span 2; } }
+.style-tabs button {
+  text-align: left; padding: 14px; border-radius: 16px; cursor: pointer; background: rgba(255,255,255,.03);
+  border: 1px solid var(--line); transition: border-color .2s, background .2s;
+}
+.style-tabs button[aria-pressed="true"] { border-color: rgba(125,249,207,.6); background: rgba(125,249,207,.07); }
+.style-tabs b { display: block; font-size: 15px; }
+.style-tabs span { display: block; font-size: 12.5px; color: var(--faint); line-height: 1.4; margin-top: 2px; }
+
+/* Placement cards */
+.place .stage { margin-bottom: 18px; }
+.badge { display: inline-block; font-size: 11.5px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; padding: 3px 9px; border-radius: 999px; margin-bottom: 10px; }
+.badge.free { background: rgba(156,140,255,.16); color: var(--violet); }
+.badge.need { background: rgba(255,179,0,.13); color: #FFC94D; }
+
+/* Own icons chips */
+.icon-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 18px; }
+.icon-chip {
+  display: inline-flex; align-items: center; gap: 2px; border-radius: 12px; border: 1px solid var(--line-2);
+  background: rgba(255,255,255,.03); overflow: hidden;
+}
+.icon-chip button { border: 0; background: transparent; cursor: pointer; padding: 8px 10px; display: inline-flex; align-items: center; gap: 8px; font-size: 13.5px; color: var(--muted); }
+.icon-chip button.move { padding: 8px 8px; border-right: 1px solid var(--line); color: var(--faint); }
+.icon-chip button.move:disabled { opacity: .3; cursor: default; }
+.icon-chip svg { width: 15px; height: 15px; }
+.icon-chip.on { border-color: rgba(125,249,207,.5); background: rgba(125,249,207,.07); }
+.icon-chip.on button.toggle { color: var(--text); }
+.ticks { list-style: none; padding: 0; margin: 18px 0 0; display: grid; gap: 10px; }
+.ticks li { display: flex; gap: 12px; align-items: flex-start; color: var(--muted); font-size: 15.5px; }
+.ticks li::before {
+  content: ""; flex: none; width: 20px; height: 20px; border-radius: 50%; margin-top: 2px;
+  background: rgba(125,249,207,.14) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='M6 10.5l2.6 2.6L14.5 7' fill='none' stroke='%237DF9CF' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/20px no-repeat;
+}
+.ticks b { color: var(--text); font-weight: 600; }
+
+/* Colour */
+.swatches { display: flex; flex-wrap: wrap; gap: 10px; }
+.swatch { width: 34px; height: 34px; border-radius: 50%; border: 2px solid transparent; cursor: pointer; box-shadow: inset 0 0 0 1px rgba(0,0,0,.25); }
+.swatch[aria-pressed="true"] { border-color: #fff; box-shadow: 0 0 0 3px rgba(255,255,255,.15); }
+.toggle-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 12px 0; border-top: 1px solid var(--line); }
+.toggle-row:first-child { border-top: 0; }
+.toggle-row .t { font-weight: 600; font-size: 15px; }
+.toggle-row .s { color: var(--faint); font-size: 13.5px; line-height: 1.45; }
+.switch { position: relative; flex: none; width: 46px; height: 28px; border-radius: 999px; border: 0; cursor: pointer; background: rgba(255,255,255,.14); transition: background .2s; }
+.switch::after { content: ""; position: absolute; top: 3px; left: 3px; width: 22px; height: 22px; border-radius: 50%; background: #fff; transition: transform .2s; }
+.switch[aria-checked="true"] { background: var(--green); }
+.switch[aria-checked="true"]::after { transform: translateX(18px); }
+.legend { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 14px; font-size: 13.5px; color: var(--muted); }
+.legend span { display: inline-flex; align-items: center; gap: 7px; }
+.legend i { width: 18px; height: 9px; border-radius: 5px; display: inline-block; }
+
+/* Stats */
+.stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1px; background: var(--line); border-radius: 18px; overflow: hidden; border: 1px solid var(--line); }
+@media (max-width: 520px) { .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.stat { background: var(--surface); padding: 16px; }
+.stat small { display: block; color: var(--faint); font-size: 12.5px; }
+.stat b { font-size: 20px; font-variant-numeric: tabular-nums; letter-spacing: -.01em; }
+
+/* Privacy */
+.privacy { background: radial-gradient(60% 80% at 15% 0%, rgba(75,59,214,.28), transparent 70%), var(--bg-2); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+.card .big-claim { color: var(--text); font-size: clamp(22px, 3vw, 28px); font-weight: 750; letter-spacing: -.02em; line-height: 1.25; margin: 0 0 6px; }
+
+/* Install */
+.steps { counter-reset: s; list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; }
+.steps > li { counter-increment: s; position: relative; padding: 20px 20px 20px 70px; min-width: 0; }
+@media (max-width: 520px) { .steps > li { padding: 70px 18px 20px; } }
+.steps > li::before {
+  content: counter(s); position: absolute; left: 20px; top: 20px; width: 34px; height: 34px; border-radius: 11px;
+  display: grid; place-items: center; font-weight: 800; color: #062016; background: linear-gradient(135deg, var(--mint), var(--green));
+}
+.steps .opt { font-size: 11.5px; font-weight: 700; color: var(--faint); text-transform: uppercase; letter-spacing: .08em; margin-left: 8px; }
+.code {
+  display: flex; align-items: center; gap: 10px; margin-top: 12px; padding: 10px 10px 10px 14px; border-radius: 12px;
+  background: #07060f; border: 1px solid var(--line-2); font-family: var(--mono); font-size: 13px; color: #CFE9DE;
+}
+.code code { flex: 1; -webkit-overflow-scrolling: touch; min-width: 0; overflow-x: auto; white-space: nowrap; scrollbar-width: thin; }
+.download-card { display: grid; grid-template-columns: auto 1fr auto; gap: 22px; align-items: center; padding: 28px; }
+.download-card img { width: 84px; height: 84px; }
+@media (max-width: 720px) { .download-card { grid-template-columns: 1fr; text-align: left; } .download-card .btn { width: 100%; } }
+.req { display: flex; flex-wrap: wrap; gap: 8px 18px; margin-top: 8px; color: var(--muted); font-size: 14.5px; }
+.fp { margin-top: 18px; font-size: 12.5px; color: var(--faint); word-break: break-all; }
+.fp code { font-family: var(--mono); color: var(--muted); }
+
+/* FAQ */
+details { border-bottom: 1px solid var(--line); }
+summary { cursor: pointer; list-style: none; padding: 18px 40px 18px 0; position: relative; font-weight: 650; font-size: 16.5px; }
+summary::-webkit-details-marker { display: none; }
+summary::after { content: "+"; position: absolute; right: 6px; top: 14px; font-size: 24px; font-weight: 400; color: var(--faint); transition: transform .2s; }
+details[open] summary::after { transform: rotate(45deg); }
+details p { margin: 0 0 18px; color: var(--muted); }
+
+footer { padding: 40px 0 60px; color: var(--faint); font-size: 14px; border-top: 1px solid var(--line); }
+footer .wrap { display: flex; flex-wrap: wrap; gap: 12px 24px; align-items: center; justify-content: space-between; }
+
+/* Animations in the mock bars */
+@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .3; } }
+.pulse { animation: pulse 1.6s ease-in-out infinite; }
+@keyframes cover { 0%, 30% { opacity: 0; } 42%, 88% { opacity: 1; } 100% { opacity: 0; } }
+.cover { animation: cover 4.2s ease-in-out infinite; }
+@keyframes rise { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
+.reveal { opacity: 0; }
+.reveal.in { animation: rise .7s cubic-bezier(.2,.7,.2,1) forwards; }
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .pulse, .cover { animation: none; }
+  .reveal { opacity: 1; } .reveal.in { animation: none; }
+}
+.toast {
+  position: fixed; left: 50%; bottom: 24px; transform: translate(-50%, 20px); opacity: 0; pointer-events: none;
+  background: var(--surface-2); border: 1px solid var(--line-2); padding: 10px 16px; border-radius: 12px; font-size: 14px; transition: .25s; z-index: 50;
+}
+.toast.show { opacity: 1; transform: translate(-50%, 0); }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+</style>
+</head>
+<body>
+
+<nav class="nav" aria-label="Main">
+  <div class="wrap">
+    <a class="brand" href="#top"><img src="icon.svg" alt="" width="30" height="30">Barkeep</a>
+    <div class="nav-links">
+      <a href="#styles">Styles</a>
+      <a href="#placement">Placement</a>
+      <a href="#own-icons">Own icons</a>
+      <a href="#colour">Colour</a>
+      <a href="#install">Install</a>
+      <a href="#faq">FAQ</a>
+    </div>
+    <a class="btn btn-primary btn-sm js-download" href="https://github.com/shoccho/barkeep/releases/latest/download/Barkeep.apk">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11m0 0l-4.5-4.5M12 15l4.5-4.5M5 20h14"/></svg>
+      Download
+    </a>
+  </div>
+</nav>
+
+<header class="hero" id="top">
+  <div class="wrap hero-grid">
+    <div>
+      <span class="eyebrow"><i></i>For Samsung Galaxy · One UI 9</span>
+      <h1>Your status bar,<br><span class="grad">kept your way.</span></h1>
+      <p class="lead">
+        One UI 9 only lets you show the battery <em>with</em> a number. <strong>Barkeep draws a clean battery pill without it</strong> — then goes further: five indicator styles, a status icon row you arrange yourself, colours that follow your icons, and live battery stats.
+      </p>
+      <div class="cta">
+        <a class="btn btn-primary js-download" href="https://github.com/shoccho/barkeep/releases/latest/download/Barkeep.apk">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11m0 0l-4.5-4.5M12 15l4.5-4.5M5 20h14"/></svg>
+          Download the APK
+        </a>
+        <a class="btn btn-ghost" href="#styles">See what it does</a>
+      </div>
+      <div class="release-line js-release">Free · direct download from GitHub Releases</div>
+      <div class="chips">
+        <span class="chip">No internet permission</span>
+        <span class="chip">No ads, no accounts</span>
+        <span class="chip">Quick Settings tile</span>
+        <span class="chip">Android 17</span>
+      </div>
+    </div>
+
+    <div class="phone" aria-label="Interactive preview">
+      <div class="screen">
+        <div class="bar" data-placement="own" data-view="full"></div>
+        <div class="zoom">
+          <div class="zoom-label"><span>Magnified</span><span class="js-state-label">On battery · 72%</span></div>
+          <div class="bar" data-placement="own" data-view="zoom"></div>
+        </div>
+        <div class="controls">
+          <div class="seg" role="group" aria-label="Battery state">
+            <button type="button" data-power="battery" aria-pressed="true">On battery</button>
+            <button type="button" data-power="charging" aria-pressed="false">Charging</button>
+            <button type="button" data-power="saver" aria-pressed="false">Power saving</button>
+          </div>
+          <div class="range">
+            <label for="level">Battery</label>
+            <input id="level" type="range" min="1" max="100" value="72">
+            <output for="level" class="js-level">72%</output>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<section id="why">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <span class="kicker">The idea</span>
+      <h2>See how full it is at a glance. Skip the number.</h2>
+      <p>A shape tells you everything you need — mostly full, half, nearly empty — without a percentage pulling your eye every time you look at the screen. Barkeep puts that shape exactly where Samsung's battery lives, so nothing else on your status bar has to move.</p>
+    </div>
+    <div class="compare reveal">
+      <div>
+        <div class="tag">One UI 9</div>
+        <div class="stage"><div class="bar" data-placement="stock" data-view="zoom"></div></div>
+      </div>
+      <svg class="arrow" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14m-5-5l5 5-5 5"/></svg>
+      <div>
+        <div class="tag">With Barkeep</div>
+        <div class="stage"><div class="bar" data-placement="own" data-view="zoom"></div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="styles" style="padding-top: 24px;">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <span class="kicker">Five styles</span>
+      <h2>Pick the shape that suits your phone.</h2>
+      <p>From a stock-looking pill to a ring that hugs the punch-hole camera. Tap one — the previews on this page all follow along.</p>
+    </div>
+    <div class="reveal">
+      <div class="stage"><div class="bar" data-placement="own" data-view="zoom"></div></div>
+      <div class="style-tabs" role="group" aria-label="Indicator style">
+        <button type="button" data-style="capsule" aria-pressed="true"><b>Capsule</b><span>One UI-style solid pill</span></button>
+        <button type="button" data-style="classic" aria-pressed="false"><b>Classic</b><span>Outlined battery with a tip</span></button>
+        <button type="button" data-style="dot" aria-pressed="false"><b>Dot</b><span>Tiny circular gauge</span></button>
+        <button type="button" data-style="ring" aria-pressed="false"><b>Camera ring</b><span>Wraps the punch-hole camera</span></button>
+        <button type="button" data-style="edge" aria-pressed="false"><b>Edge line</b><span>Thin bar along the top edge</span></button>
+      </div>
+    </div>
+    <div class="grid-3" style="margin-top: 16px;">
+      <div class="card reveal">
+        <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="16" height="8" rx="4"/><path d="M21 11v2"/></svg></div>
+        <h3>Size it to the pixel</h3>
+        <p>Width, height, offset and distance from the top, in dp, with sliders and presets — <em>Beside camera</em>, <em>Top right</em>, <em>Top left</em> or <em>Samsung size</em>. Anchor it left, centre or right.</p>
+      </div>
+      <div class="card reveal">
+        <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><circle cx="12" cy="12" r="8"/></svg></div>
+        <h3>Camera ring that follows you</h3>
+        <p>The ring finds the punch-hole camera by itself and stays wrapped around it in any orientation. Tune its thickness and the gap from the lens.</p>
+      </div>
+      <div class="card reveal">
+        <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5h12"/><path d="M3 5h18" opacity=".35"/><path d="M3 12h18M3 19h18" opacity=".35"/></svg></div>
+        <h3>Edge line, your way</h3>
+        <p>A hairline across the top of the screen that grows from the left, the right or the centre. Choose its thickness, side inset and how far from the top it sits.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="placement">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <span class="kicker">Three placements</span>
+      <h2>Put it anywhere — or exactly where Samsung's was.</h2>
+      <p>Choose how Barkeep shares the status bar with One UI.</p>
+    </div>
+    <div class="grid-3">
+      <div class="card place reveal">
+        <div class="stage"><div class="bar" data-placement="free" data-view="zoom"></div></div>
+        <span class="badge free">Works out of the box</span>
+        <h3>Free</h3>
+        <p>Place the pill wherever you like. The default sits just right of the camera — a strip that's always empty — with presets, sliders and a nudge pad for fine moves.</p>
+      </div>
+      <div class="card place reveal">
+        <div class="stage"><div class="bar" data-placement="spot" data-view="zoom"></div></div>
+        <span class="badge need">Uses accessibility</span>
+        <h3>Samsung's spot</h3>
+        <p>Barkeep finds Samsung's battery on screen and paints a solid pill exactly over it, hiding the number. Wi-Fi and signal icons never move. Grow the cover a touch if a sliver peeks out.</p>
+      </div>
+      <div class="card place reveal">
+        <div class="stage"><div class="bar" data-placement="own" data-view="zoom"></div></div>
+        <span class="badge need">Uses accessibility + one adb command</span>
+        <h3>Own icons</h3>
+        <p>Barkeep hides Samsung's right-side icons and redraws them in the order you choose, with the pill at the far right — right where the battery belongs.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="own-icons">
+  <div class="wrap split">
+    <div class="reveal">
+      <span class="kicker">Own icons</span>
+      <h2>Arrange your status bar, icon by icon.</h2>
+      <p style="color: var(--muted); font-size: 17.5px; margin: 0;">Eleven One UI status icons, redrawn live from your phone's real state. Turn each one on or off and put them in any order. Try it:</p>
+      <ul class="ticks">
+        <li><span><b>Your phone's own Samsung art.</b> Barkeep borrows the icons already installed with One UI, so the row looks stock. Drawn icons step in if any are missing.</span></li>
+        <li><span><b>Both SIMs, with 5G / LTE labels</b> while mobile data carries your internet, plus roaming and no-service states.</span></li>
+        <li><span><b>Wi-Fi in detail:</b> signal level, Wi-Fi 5 / 6 / 7 digit, 6 GHz, and whether the connection really reaches the internet.</span></li>
+        <li><span><b>Data activity arrows</b>, Bluetooth connected, NFC, hotspot, VPN, data saver, alarm, Do not disturb, airplane mode, mute and vibrate.</span></li>
+        <li><span><b>Behaves like the real thing:</b> follows the clock's centre line, hides with the status bar and when you pull down the shade, and gives Samsung's icons back exactly as they were when you switch off.</span></li>
+        <li><span><b>Fine-tune</b> icon size, spacing and distance from the right edge.</span></li>
+      </ul>
+    </div>
+    <div class="card reveal">
+      <div class="stage"><div class="bar" data-placement="own" data-view="zoom"></div></div>
+      <div class="icon-chips js-chips" aria-label="Status icons — tap to show or hide, arrow to move left"></div>
+      <p style="margin-top: 14px; font-size: 13.5px; color: var(--faint);">Tap an icon to show or hide it · ‹ moves it left · the battery always stays rightmost.</p>
+    </div>
+  </div>
+</section>
+
+<section id="colour">
+  <div class="wrap split">
+    <div class="card reveal" style="order: 1;">
+      <div class="seg" role="group" aria-label="Wallpaper" style="margin-bottom: 12px;">
+        <button type="button" data-backdrop="dark" aria-pressed="true">Dark app</button>
+        <button type="button" data-backdrop="light" aria-pressed="false">Light app</button>
+        <button type="button" data-backdrop="photo" aria-pressed="false">Photo</button>
+      </div>
+      <div class="stage"><div class="bar" data-placement="own" data-view="zoom"></div></div>
+      <div class="seg" role="group" aria-label="Colour mode" style="margin-top: 14px;">
+        <button type="button" data-color="theme" aria-pressed="true">Theme</button>
+        <button type="button" data-color="match" aria-pressed="false">Match icons</button>
+        <button type="button" data-color="white" aria-pressed="false">White</button>
+        <button type="button" data-color="black" aria-pressed="false">Black</button>
+        <button type="button" data-color="custom" aria-pressed="false">Pick</button>
+      </div>
+      <div class="swatches js-swatches" role="group" aria-label="Custom colour" style="margin-top: 14px;"></div>
+      <div style="margin-top: 10px;">
+        <div class="toggle-row"><div><div class="t">Status colours</div><div class="s">Green charging · amber power saving · red low</div></div><button type="button" class="switch" role="switch" data-flag="stateColors" aria-checked="true" aria-label="Status colours"></button></div>
+        <div class="toggle-row"><div><div class="t">Contrast rim</div><div class="s">A thin opposite-colour edge, readable on any wallpaper</div></div><button type="button" class="switch" role="switch" data-flag="rim" aria-checked="false" aria-label="Contrast rim"></button></div>
+        <div class="range" style="padding-top: 10px; border-top: 1px solid var(--line);"><label for="opacity">Opacity</label><input id="opacity" type="range" min="20" max="100" value="100"><output for="opacity" class="js-opacity">100%</output></div>
+      </div>
+    </div>
+    <div class="reveal" style="order: 0;">
+      <span class="kicker">Colour</span>
+      <h2>Always readable. Always yours.</h2>
+      <p style="color: var(--muted); font-size: 17.5px; margin: 0;">Switch the wallpaper above to see why <b style="color: var(--text);">Match icons</b> matters: in a light app Samsung's icons turn dark — and so does your pill, in every app, cross-fading smoothly as you move around.</p>
+      <ul class="ticks">
+        <li><span><b>Follow theme, Match icons, White, Black</b> or any custom colour.</span></li>
+        <li><span><b>Status colours</b> tell you what's going on without a number. Set the low-battery point anywhere from 5% to 50%.</span></li>
+        <li><span><b>Opacity</b> from 20% to 100%, and an optional <b>contrast rim</b> for busy wallpapers.</span></li>
+      </ul>
+      <div class="legend">
+        <span><i style="background: #34C759"></i>Charging</span>
+        <span><i style="background: #FFB300"></i>Power saving</span>
+        <span><i style="background: #FF3B30"></i>Low</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="behaviour">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <span class="kicker">Behaviour</span>
+      <h2>Small touches that make it feel built in.</h2>
+      <p>Flip these and watch the preview — set the battery to charging or below 5% to see the animations.</p>
+    </div>
+    <div class="split">
+      <div class="card reveal">
+        <div class="stage"><div class="bar" data-placement="own" data-view="zoom"></div></div>
+        <div class="seg" role="group" aria-label="Battery state" style="margin-top: 14px;">
+          <button type="button" data-power="battery" aria-pressed="true">On battery</button>
+          <button type="button" data-power="charging" aria-pressed="false">Charging</button>
+          <button type="button" data-preset="critical" aria-pressed="false">Nearly empty</button>
+        </div>
+        <div style="margin-top: 8px;">
+          <div class="toggle-row"><div><div class="t">Charging bolt</div></div><button type="button" class="switch" role="switch" data-flag="bolt" aria-checked="true" aria-label="Charging bolt"></button></div>
+          <div class="toggle-row"><div><div class="t">Charging shimmer</div><div class="s">A soft light glides across while charging. Paused when the screen is off.</div></div><button type="button" class="switch" role="switch" data-flag="shimmer" aria-checked="true" aria-label="Charging shimmer"></button></div>
+          <div class="toggle-row"><div><div class="t">Pulse when nearly empty</div><div class="s">Breathes at 5% and below</div></div><button type="button" class="switch" role="switch" data-flag="pulse" aria-checked="true" aria-label="Pulse when nearly empty"></button></div>
+        </div>
+      </div>
+      <div class="grid-2">
+        <div class="card reveal">
+          <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></div>
+          <h3>Hides in full screen</h3>
+          <p>Videos and games get the whole screen. Optionally hide in landscape too.</p>
+        </div>
+        <div class="card reveal">
+          <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12a8 8 0 1 1-2.3-5.7"/><path d="M20 4v5h-5"/></svg></div>
+          <h3>Back after a restart</h3>
+          <p>Starts with your phone and after updates, and can ask One UI not to put it to sleep.</p>
+        </div>
+        <div class="card reveal">
+          <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="8" height="8" rx="2"/><rect x="13" y="3" width="8" height="8" rx="4"/><rect x="3" y="13" width="8" height="8" rx="2"/><rect x="13" y="13" width="8" height="8" rx="2"/></svg></div>
+          <h3>Quick Settings tile</h3>
+          <p>Turn the pill on or off from the shade. Long-press the tile to jump straight to settings.</p>
+        </div>
+        <div class="card reveal">
+          <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l2-6 4 12 2-6h6"/></svg></div>
+          <h3>Hide Samsung's battery</h3>
+          <p>With one adb command, Barkeep hides the stock battery while the pill is on — and restores your own setting when it's off.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="stats">
+  <div class="wrap split">
+    <div class="reveal">
+      <span class="kicker">Battery right now</span>
+      <h2>The numbers, when you actually want them.</h2>
+      <p style="color: var(--muted); font-size: 17.5px; margin: 0 0 14px;">Open the app for a live readout of what your battery is doing — charging speed in watts, current draw, temperature, health and how many charge cycles it has been through.</p>
+      <p style="color: var(--muted); font-size: 17.5px; margin: 0;">The settings screen also has a <b style="color: var(--text);">magnified live preview</b> on light, dark or photo backgrounds, can simulate charging, low and saver states, folds every section away, and resets to defaults in one tap.</p>
+    </div>
+    <div class="card reveal">
+      <div class="stats" aria-label="Example battery stats">
+        <div class="stat"><small>Level</small><b class="js-stat-level">72%</b></div>
+        <div class="stat"><small>Status</small><b class="js-stat-status">On battery</b></div>
+        <div class="stat"><small class="js-stat-wlabel">Drawing</small><b class="js-stat-watts">1.9 W</b></div>
+        <div class="stat"><small>Current</small><b class="js-stat-ma">486 mA</b></div>
+        <div class="stat"><small>Voltage</small><b>3.98 V</b></div>
+        <div class="stat"><small>Temperature</small><b>31.4 °C</b></div>
+        <div class="stat"><small>Health</small><b>Good</b></div>
+        <div class="stat"><small>Charge cycles</small><b>214</b></div>
+        <div class="stat"><small class="js-stat-flabel">Full in</small><b class="js-stat-full">—</b></div>
+      </div>
+      <p style="margin-top: 12px; font-size: 13px; color: var(--faint);">Example values. Charging time and wattage show when your phone reports them.</p>
+    </div>
+  </div>
+</section>
+
+<section class="privacy" id="privacy">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <span class="kicker">Privacy</span>
+      <h2>It can't phone home. It has no way to.</h2>
+    </div>
+    <div class="grid-3">
+      <div class="card reveal">
+        <p class="big-claim">No internet permission.</p>
+        <p>Android never gives Barkeep network access, so nothing about you or your phone can leave it. No ads, no analytics, no account.</p>
+      </div>
+      <div class="card reveal">
+        <p class="big-claim">Accessibility, used narrowly.</p>
+        <p>The optional accessibility service reads only where Samsung's battery icon is and what colour the status bar icons are. It doesn't read, store or send anything you type or see.</p>
+      </div>
+      <div class="card reveal">
+        <p class="big-claim">Everything is reversible.</p>
+        <p>Turn the pill off and Samsung's battery and status icons come back exactly as you had them. Barkeep keeps track of which changes are its own.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="install">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <span class="kicker">Get it</span>
+      <h2>Install in a minute.</h2>
+      <p>Barkeep isn't on the Play Store — download the APK straight from GitHub.</p>
+    </div>
+
+    <div class="card download-card reveal">
+      <img src="icon.svg" alt="Barkeep icon" width="84" height="84">
+      <div>
+        <h3 style="font-size: 22px;">Barkeep for Android</h3>
+        <div class="req">
+          <span>Android 17 (One UI 9)</span>
+          <span>Built for Galaxy A56</span>
+          <span class="js-release-meta">Latest release</span>
+        </div>
+      </div>
+      <a class="btn btn-primary js-download" href="https://github.com/shoccho/barkeep/releases/latest/download/Barkeep.apk">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11m0 0l-4.5-4.5M12 15l4.5-4.5M5 20h14"/></svg>
+        Download APK
+      </a>
+    </div>
+
+    <ol class="steps" style="margin-top: 16px;">
+      <li class="card reveal"><h3>Download and open the APK</h3><p>Your browser will ask to allow installs from this source the first time — allow it, then tap Install.</p></li>
+      <li class="card reveal"><h3>Allow "Appear on top"</h3><p>The only required permission. Flip the main switch in Barkeep and it takes you straight there.</p></li>
+      <li class="card reveal"><h3>Allow unrestricted battery use <span class="opt">Recommended</span></h3><p>Stops One UI from putting the pill to sleep in the background.</p></li>
+      <li class="card reveal"><h3>Turn on the accessibility service <span class="opt">For Samsung's spot, Own icons, Match icons</span></h3><p>Lets Barkeep see where Samsung's battery is and what colour its icons are.</p></li>
+      <li class="card reveal">
+        <h3>Run one adb command <span class="opt">For hiding Samsung's icons</span></h3>
+        <p>From a computer with USB debugging on, once. Barkeep can then hide Samsung's battery (and, in Own icons, its other icons) and bring them back when the pill is off.</p>
+        <div class="code"><code id="adb">adb shell pm grant com.github.shoccho.barkeep android.permission.WRITE_SECURE_SETTINGS</code><button type="button" class="btn btn-ghost btn-sm js-copy" data-target="adb">Copy</button></div>
+      </li>
+    </ol>
+    <p class="fp">Signing certificate SHA-256: <code>51:EC:86:9B:CC:79:F5:E3:A6:9F:FD:AB:32:00:7E:EA:2E:14:E6:65:76:70:40:63:77:FE:95:C2:65:01:BC:96</code></p>
+  </div>
+</section>
+
+<section id="faq" style="padding-top: 24px;">
+  <div class="wrap" style="max-width: 820px;">
+    <div class="sec-head reveal">
+      <span class="kicker">FAQ</span>
+      <h2>Questions</h2>
+    </div>
+    <details><summary>Will it work on my phone?</summary><p>Barkeep needs Android 17. It's built and tuned on a Galaxy A56 running One UI 9 — the default sizes match that phone's stock battery. Other Galaxy phones on One UI 9 should work, and Free placement works on any Android 17 phone, but they haven't been tested.</p></details>
+    <details><summary>Why does it need "Appear on top"?</summary><p>That's how an app draws over the status bar. Without it, there's nowhere to put the pill.</p></details>
+    <details><summary>Why the accessibility service?</summary><p>It's optional. It lets Barkeep draw above the status bar in Samsung's exact battery spot and read the colour of the status icons for Match icons. It reads nothing else.</p></details>
+    <details><summary>Why an adb command?</summary><p>Hiding Samsung's own icons uses a system setting only adb can unlock — the same switch Good Lock's QuickStar flips. You run it once; without it, everything else still works.</p></details>
+    <details><summary>How do I get Samsung's battery back?</summary><p>Turn the pill off — from the app or the Quick Settings tile. Barkeep restores Samsung's battery and status icons exactly as they were.</p></details>
+    <details><summary>Does it drain the battery?</summary><p>The charging shimmer pauses when the screen is off, and Match icons samples colour only in short bursts while the screen is changing, backing off in busy apps.</p></details>
+    <details><summary>Does it ship Samsung's icons?</summary><p>No. In Own icons, Barkeep borrows the icon art already installed on your phone with One UI, and falls back to its own drawn icons if any are missing.</p></details>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <a class="brand" href="#top"><img src="icon.svg" alt="" width="26" height="26">Barkeep</a>
+    <span>Not affiliated with Samsung. Galaxy and One UI are trademarks of Samsung Electronics.</span>
+    <a href="https://github.com/shoccho/barkeep">Source on GitHub</a>
+  </div>
+</footer>
+
+<div class="toast" role="status" aria-live="polite"></div>
+
+<script>
+(() => {
+  const REPO = 'shoccho/barkeep';
+
+  // ---------------------------------------------------------------- state
+  const ICONS = [
+    ['alarm', 'Alarm'], ['bluetooth', 'Bluetooth'], ['nfc', 'NFC'], ['vpn', 'VPN'], ['hotspot', 'Hotspot'],
+    ['saver', 'Data saver'], ['dnd', 'Do not disturb'], ['mute', 'Mute'], ['airplane', 'Airplane'],
+    ['wifi', 'Wi-Fi'], ['mobile', 'Mobile'],
+  ];
+  const S = {
+    style: 'capsule', level: 72, power: 'battery',
+    color: 'theme', custom: '#4FC3F7', stateColors: true, rim: false, opacity: 100,
+    backdrop: 'dark', bolt: true, shimmer: true, pulse: true, low: 15,
+    order: ICONS.map(i => i[0]), shown: new Set(['mute', 'wifi', 'mobile']),
+  };
+  const SWATCHES = ['#4FC3F7', '#7C4DFF', '#FF4081', '#FFD54F', '#69F0AE', '#FF8A65', '#B0BEC5', '#E040FB'];
+  const COL = { charging: '#34C759', saver: '#FFB300', low: '#FF3B30' };
+  const BACK = {
+    dark: { bg: '#101018', icon: '#FFFFFF' },
+    light: { bg: '#F2F2F6', icon: '#111111' },
+    photo: { bg: '#CFE0EF', icon: '#111111' },
+  };
+
+  // ---------------------------------------------------------------- colour helpers
+  const hex = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16));
+  const lum = h => { const [r, g, b] = hex(h).map(v => v / 255); return .2126 * r + .7152 * g + .0722 * b; };
+  const mix = (a, b, t) => '#' + hex(a).map((v, i) => Math.round(v * (1 - t) + hex(b)[i] * t).toString(16).padStart(2, '0')).join('');
+  const contrast = h => lum(h) > .55 ? '#000000' : '#FFFFFF';
+
+  function baseColor() {
+    const icon = BACK[S.backdrop].icon;
+    switch (S.color) {
+      case 'match': return icon;
+      case 'white': return '#FFFFFF';
+      case 'black': return '#000000';
+      case 'custom': return S.custom;
+      default: return '#FFFFFF'; // phone in dark mode
+    }
+  }
+  function fillColor(base) {
+    if (!S.stateColors) return base;
+    if (S.power === 'charging') return COL.charging;
+    if (S.power === 'saver') return COL.saver;
+    if (S.level <= S.low) return COL.low;
+    return base;
+  }
+
+  // ---------------------------------------------------------------- icon glyphs (13 x 13 box, currentColor)
+  const G = {
+    wifi: '<path d="M6.5 12 L0.4 4.7 A9.6 9.6 0 0 1 12.6 4.7 Z" fill="currentColor"/>',
+    mobile: '<rect x="0.8" y="9" width="2.3" height="3" rx=".6" fill="currentColor"/><rect x="3.9" y="6.5" width="2.3" height="5.5" rx=".6" fill="currentColor"/><rect x="7" y="4" width="2.3" height="8" rx=".6" fill="currentColor"/><rect x="10.1" y="1.3" width="2.3" height="10.7" rx=".6" fill="currentColor" opacity=".32"/>',
+    mute: '<path d="M1.5 4.6h2.4L7.2 1.8v9.4L3.9 8.4H1.5z" fill="currentColor"/><path d="M9 4.6l3 3.8M12 4.6l-3 3.8" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>',
+    dnd: '<circle cx="6.5" cy="6.5" r="5.6" fill="currentColor"/><rect x="3.4" y="5.7" width="6.2" height="1.6" rx=".8" fill="var(--hole)"/>',
+    airplane: '<path d="M6.5 0.8c.7 0 1 .7 1 1.4v2.9l4.7 2.8v1.4L7.5 7.9v2.4l1.5 1.1v1.1L6.5 11.8 4 12.5v-1.1l1.5-1.1V7.9L.8 9.3V7.9l4.7-2.8V2.2c0-.7.3-1.4 1-1.4z" fill="currentColor"/>',
+    alarm: '<circle cx="6.5" cy="7.2" r="4.6" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M6.5 4.8v2.6l1.7 1" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><path d="M1.2 3.2L3 1.6M11.8 3.2L10 1.6" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>',
+    bluetooth: '<path d="M3.4 4.2l6 4.8-3 2.5V1.5l3 2.5-6 4.8" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>',
+    nfc: '<rect x="1.3" y="1.3" width="10.4" height="10.4" rx="2.4" fill="none" stroke="currentColor" stroke-width="1.3"/><path d="M4.4 9V4l4.2 5V4" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>',
+    vpn: '<circle cx="4" cy="6.5" r="2.6" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M6.6 6.5h5.6M10.2 6.5v2.2M12.2 6.5v1.6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>',
+    hotspot: '<circle cx="6.5" cy="7" r="1.5" fill="currentColor"/><path d="M3.9 9.6a3.7 3.7 0 1 1 5.2 0M1.9 11.4a6.4 6.4 0 1 1 9.2 0" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>',
+    saver: '<path d="M6.5 1A5.5 5.5 0 1 1 1.4 8.6" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><path d="M6.5 4.3v4.4M4.3 6.5h4.4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>',
+  };
+
+  // ---------------------------------------------------------------- bar renderer
+  // Status bar is 360 x 40 user units (dp-like). The camera hole sits at (180, 20).
+  let uid = 0;
+  function renderBar(placement, view) {
+    const id = 'b' + (++uid);
+    const back = BACK[S.backdrop];
+    const iconC = back.icon;
+    const base = placement === 'stock' ? iconC : baseColor();
+    const fill = placement === 'stock' ? iconC : fillColor(base);
+    const track = mix(back.bg, base, .38);
+    const charging = S.power === 'charging';
+    const critical = S.level <= 5 && !charging && S.pulse;
+    let style = S.style;
+    if (placement === 'spot' || placement === 'stock') style = 'capsule';
+    const lv = Math.max(1, Math.min(100, S.level)) / 100;
+    const out = [];
+
+    // background
+    const bgFill = S.backdrop === 'photo' ? `url(#${id}p)` : back.bg;
+    out.push(`<defs>
+      <linearGradient id="${id}p" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#F6D7C3"/><stop offset=".5" stop-color="#CFE0EF"/><stop offset="1" stop-color="#A9C9E8"/></linearGradient>
+      <linearGradient id="${id}s" x1="0" x2="1"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset=".5" stop-color="#fff" stop-opacity=".75"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>
+    </defs>`);
+    out.push(`<rect width="360" height="40" fill="${bgFill}"/>`);
+    if (S.backdrop === 'photo') out.push(`<circle cx="70" cy="40" r="46" fill="#FFE7A8" opacity=".55"/><circle cx="300" cy="-6" r="30" fill="#fff" opacity=".35"/>`);
+
+    // clock + camera
+    out.push(`<text x="20" y="25" font-family="-apple-system,Segoe UI,Roboto,sans-serif" font-size="13" font-weight="600" fill="${iconC}">12:45</text>`);
+    out.push(`<circle cx="180" cy="20" r="5.8" fill="#000"/><circle cx="180" cy="20" r="2.2" fill="#1b1b2e"/>`);
+
+    // pill geometry
+    const ownRow = placement === 'own' || placement === 'spot' || placement === 'stock';
+    const rightEdge = 360 - 15;
+    const pillW = 26, pillH = 12;
+    let pillX = rightEdge - pillW, pillY = 14;
+    if (placement === 'free') { pillX = 194; }
+    const pillInRow = ownRow && (style === 'capsule' || style === 'classic' || style === 'dot');
+    const pillInFree = placement === 'free' && (style === 'capsule' || style === 'classic' || style === 'dot');
+
+    // right-side icons
+    let order = placement === 'own' ? S.order.filter(k => S.shown.has(k)) : ['mute', 'wifi', 'mobile'];
+    let x = (pillInRow ? pillX - 4 : rightEdge);
+    const icons = [];
+    for (let i = order.length - 1; i >= 0; i--) {
+      const k = order[i];
+      x -= 13;
+      if (x < 192) break; // ran into the camera, like the real status bar
+      icons.push(`<g transform="translate(${x} 13.5)" color="${iconC}" style="--hole:${back.bg}">${G[k]}</g>`);
+      x -= 3.5;
+    }
+    out.push(icons.join(''));
+
+    // the indicator
+    const op = S.opacity / 100;
+    const cls = critical ? 'pulse' : '';
+    const rimC = contrast(base);
+    const shim = (cx, cy, w, h, clip) => (charging && S.shimmer)
+      ? `<g clip-path="url(#${clip})"><rect x="${cx - 14}" y="${cy}" width="14" height="${h}" fill="url(#${id}s)"><animateTransform attributeName="transform" type="translate" from="0 0" to="${w + 14} 0" dur="1.8s" repeatCount="indefinite"/></rect></g>`
+      : '';
+    const bolt = (cx, cy, s, color) => (charging && S.bolt)
+      ? `<path transform="translate(${cx} ${cy}) scale(${s})" d="M1.4 -5 L-3 .9 H-.3 L-1.4 5 L3 -.9 H.3 Z" fill="${color}"/>` : '';
+
+    function capsule(px, py) {
+      const fw = pillW * lv;
+      return `<g class="${cls}" opacity="${op}">
+        <clipPath id="${id}c"><rect x="${px}" y="${py}" width="${pillW}" height="${pillH}" rx="${pillH / 2}"/></clipPath>
+        <rect x="${px}" y="${py}" width="${pillW}" height="${pillH}" rx="${pillH / 2}" fill="${track}" ${S.rim ? `stroke="${rimC}" stroke-width=".8"` : ''}/>
+        <g clip-path="url(#${id}c)"><rect x="${px}" y="${py}" width="${fw}" height="${pillH}" fill="${fill}"/></g>
+        <clipPath id="${id}f"><rect x="${px}" y="${py}" width="${fw}" height="${pillH}"/></clipPath>
+        ${shim(px, py, fw, pillH, id + 'f')}
+        ${bolt(px + pillW / 2, py + pillH / 2, .95, contrast(lv > .5 ? fill : track))}
+      </g>`;
+    }
+    function classic(px, py) {
+      const w = 23, h = 12.5, y = py - .25;
+      const iw = (w - 4.4) * lv;
+      return `<g class="${cls}" opacity="${op}">
+        <rect x="${px + .7}" y="${y + .7}" width="${w - 1.4}" height="${h - 1.4}" rx="3.4" fill="none" stroke="${base}" stroke-width="1.4"/>
+        <rect x="${px + w + .6}" y="${y + 3.8}" width="2" height="4.9" rx="1" fill="${base}"/>
+        <rect x="${px + 2.2}" y="${y + 2.2}" width="${iw}" height="${h - 4.4}" rx="1.6" fill="${fill}"/>
+        <clipPath id="${id}f"><rect x="${px + 2.2}" y="${y + 2.2}" width="${iw}" height="${h - 4.4}" rx="1.6"/></clipPath>
+        ${shim(px + 2.2, y + 2.2, iw, h - 4.4, id + 'f')}
+        ${bolt(px + w / 2, y + h / 2, .75, contrast(lv > .5 ? fill : back.bg))}
+      </g>`;
+    }
+    function dot(cx, cy, r) {
+      const c = 2 * Math.PI * r;
+      return `<g class="${cls}" opacity="${op}">
+        <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${track}" stroke-width="2.4"/>
+        <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${fill}" stroke-width="2.4" stroke-linecap="round" stroke-dasharray="${c * lv} ${c}" transform="rotate(-90 ${cx} ${cy})"/>
+        ${bolt(cx, cy, .55, base)}
+      </g>`;
+    }
+
+    if (placement === 'stock') {
+      out.push(`<rect x="${pillX}" y="${pillY}" width="${pillW}" height="${pillH}" rx="6" fill="${track}"/>
+        <clipPath id="${id}k"><rect x="${pillX}" y="${pillY}" width="${pillW}" height="${pillH}" rx="6"/></clipPath>
+        <rect x="${pillX}" y="${pillY}" width="${pillW * lv}" height="${pillH}" fill="${iconC}" clip-path="url(#${id}k)"/>
+        <text x="${pillX + pillW / 2}" y="${pillY + 9.2}" text-anchor="middle" font-family="-apple-system,Segoe UI,Roboto,sans-serif" font-size="9" font-weight="700" fill="${contrast(iconC)}">${S.level}</text>`);
+    } else if (placement === 'spot') {
+      out.push(`<rect x="${pillX}" y="${pillY}" width="${pillW}" height="${pillH}" rx="6" fill="${iconC}"/>
+        <text x="${pillX + pillW / 2}" y="${pillY + 9.2}" text-anchor="middle" font-family="-apple-system,Segoe UI,Roboto,sans-serif" font-size="9" font-weight="700" fill="${contrast(iconC)}">${S.level}</text>`);
+      out.push(`<g class="cover"><rect x="${pillX - 1}" y="${pillY - 1}" width="${pillW + 2}" height="${pillH + 2}" rx="7" fill="${bgFill}"/>${capsule(pillX, pillY)}</g>`);
+    } else if (pillInRow || pillInFree) {
+      if (style === 'capsule') out.push(capsule(pillX, pillY));
+      if (style === 'classic') out.push(classic(pillX, pillY));
+      if (style === 'dot') out.push(dot(pillX + pillW - 7, 20, 5.6));
+    } else if (style === 'ring') {
+      const r = 9, c = 2 * Math.PI * r;
+      out.push(`<g class="${cls}" opacity="${op}">
+        <circle cx="180" cy="20" r="${r}" fill="none" stroke="${track}" stroke-width="2.4"/>
+        <circle cx="180" cy="20" r="${r}" fill="none" stroke="${fill}" stroke-width="2.4" stroke-linecap="round" stroke-dasharray="${c * lv} ${c}" transform="rotate(-90 180 20)"/>
+      </g>`);
+    } else if (style === 'edge') {
+      const w = 360 * lv;
+      out.push(`<g class="${cls}" opacity="${op}">
+        <rect x="0" y="0" width="${w}" height="3" fill="${fill}"/>
+        <clipPath id="${id}f"><rect x="0" y="0" width="${w}" height="3"/></clipPath>
+        ${shim(0, 0, w, 3, id + 'f')}
+      </g>`);
+    }
+
+    // The zoomed view crops to the right half; the edge line spans the whole width, so show it all.
+    const vb = view !== 'zoom' || style === 'edge' ? '0 0 360 40' : '164 2 196 36';
+    const label = placement === 'stock' ? `Stock One UI battery showing ${S.level}` : `Barkeep ${style} indicator at ${S.level}%`;
+    return `<svg viewBox="${vb}" role="img" aria-label="${label}">${out.join('')}</svg>`;
+  }
+
+  // ---------------------------------------------------------------- wiring
+  const bars = [...document.querySelectorAll('.bar')];
+  const stateText = () => ({ battery: 'On battery', charging: 'Charging', saver: 'Power saving' }[S.power]);
+
+  function render() {
+    uid = 0;
+    bars.forEach(b => { b.innerHTML = renderBar(b.dataset.placement, b.dataset.view); });
+    document.querySelectorAll('.js-state-label').forEach(e => e.textContent = `${stateText()} · ${S.level}%`);
+    document.querySelectorAll('.js-level').forEach(e => e.textContent = S.level + '%');
+    document.getElementById('level').value = S.level;
+    press('[data-power]', b => b.dataset.power === S.power && !(S.level <= 5 && S.power === 'battery' && b.closest('#behaviour')));
+    press('[data-preset="critical"]', () => S.level <= 5 && S.power === 'battery');
+    press('[data-style]', b => b.dataset.style === S.style);
+    press('[data-color]', b => b.dataset.color === S.color);
+    press('[data-backdrop]', b => b.dataset.backdrop === S.backdrop);
+    press('.swatch', b => S.color === 'custom' && b.dataset.hex === S.custom);
+    document.querySelectorAll('[data-flag]').forEach(b => b.setAttribute('aria-checked', String(!!S[b.dataset.flag])));
+    document.querySelector('.js-opacity').textContent = S.opacity + '%';
+    renderChips();
+    renderStats();
+  }
+  function press(sel, fn) { document.querySelectorAll(sel).forEach(b => b.setAttribute('aria-pressed', String(!!fn(b)))); }
+
+  document.addEventListener('click', e => {
+    const t = e.target.closest('button');
+    if (!t) return;
+    if (t.dataset.power) { S.power = t.dataset.power; if (S.level <= 5 && t.closest('#behaviour')) S.level = 72; }
+    else if (t.dataset.preset === 'critical') { S.power = 'battery'; S.level = 4; }
+    else if (t.dataset.style) S.style = t.dataset.style;
+    else if (t.dataset.color) S.color = t.dataset.color;
+    else if (t.dataset.backdrop) S.backdrop = t.dataset.backdrop;
+    else if (t.dataset.hex) { S.custom = t.dataset.hex; S.color = 'custom'; }
+    else if (t.dataset.flag) S[t.dataset.flag] = !S[t.dataset.flag];
+    else if (t.dataset.toggleIcon) { const k = t.dataset.toggleIcon; S.shown.has(k) ? S.shown.delete(k) : S.shown.add(k); }
+    else if (t.dataset.moveIcon) { const i = S.order.indexOf(t.dataset.moveIcon); if (i > 0) [S.order[i - 1], S.order[i]] = [S.order[i], S.order[i - 1]]; }
+    else if (t.classList.contains('js-copy')) { copy(document.getElementById(t.dataset.target).textContent); return; }
+    else return;
+    render();
+  });
+  document.getElementById('level').addEventListener('input', e => { S.level = +e.target.value; render(); });
+  document.getElementById('opacity').addEventListener('input', e => { S.opacity = +e.target.value; render(); });
+
+  document.querySelector('.js-swatches').innerHTML = SWATCHES.map(h =>
+    `<button type="button" class="swatch" data-hex="${h}" style="background:${h}" aria-label="Colour ${h}" aria-pressed="false"></button>`).join('');
+
+  function renderChips() {
+    const box = document.querySelector('.js-chips');
+    const focused = document.activeElement && document.activeElement.closest('.js-chips') ? document.activeElement.dataset : null;
+    box.innerHTML = S.order.map((k, i) => {
+      const label = ICONS.find(x => x[0] === k)[1];
+      const on = S.shown.has(k);
+      return `<span class="icon-chip ${on ? 'on' : ''}">
+        <button type="button" class="move" data-move-icon="${k}" ${i === 0 ? 'disabled' : ''} aria-label="Move ${label} left">‹</button>
+        <button type="button" class="toggle" data-toggle-icon="${k}" aria-pressed="${on}"><svg viewBox="0 0 13 13" style="--hole:#15132E">${G[k]}</svg>${label}</button>
+      </span>`;
+    }).join('');
+    if (focused) {
+      const sel = focused.moveIcon ? `[data-move-icon="${focused.moveIcon}"]` : focused.toggleIcon ? `[data-toggle-icon="${focused.toggleIcon}"]` : null;
+      const el = sel && box.querySelector(sel);
+      if (el && !el.disabled) el.focus();
+    }
+  }
+
+  function renderStats() {
+    const ch = S.power === 'charging';
+    const q = s => document.querySelector(s);
+    q('.js-stat-level').textContent = S.level + '%';
+    q('.js-stat-status').textContent = ch && S.level >= 100 ? 'Full' : stateText();
+    q('.js-stat-wlabel').textContent = ch ? 'Charging at' : 'Drawing';
+    q('.js-stat-watts').textContent = ch ? (S.level > 80 ? '7.4 W' : '22.6 W') : '1.9 W';
+    q('.js-stat-ma').textContent = ch ? (S.level > 80 ? '1,780 mA' : '4,820 mA') : '486 mA';
+    const mins = Math.round((100 - S.level) * (S.level > 80 ? 1.4 : .75));
+    q('.js-stat-full').textContent = ch ? (mins <= 0 ? 'Now' : mins >= 60 ? `${Math.floor(mins / 60)} h ${mins % 60} min` : `${mins} min`) : '—';
+  }
+
+  function copy(text) {
+    const done = () => toast('Command copied');
+    if (navigator.clipboard) navigator.clipboard.writeText(text).then(done, () => toast('Select the command to copy it'));
+    else toast('Select the command to copy it');
+  }
+  let tt;
+  function toast(msg) {
+    const t = document.querySelector('.toast');
+    t.textContent = msg; t.classList.add('show');
+    clearTimeout(tt); tt = setTimeout(() => t.classList.remove('show'), 1800);
+  }
+
+  // ---------------------------------------------------------------- latest release (version, size, date)
+  fetch(`https://api.github.com/repos/${REPO}/releases/latest`, { headers: { Accept: 'application/vnd.github+json' } })
+    .then(r => r.ok ? r.json() : null)
+    .then(rel => {
+      if (!rel) return;
+      const apk = (rel.assets || []).find(a => /\.apk$/i.test(a.name));
+      if (apk) document.querySelectorAll('.js-download').forEach(a => a.href = apk.browser_download_url);
+      const ver = rel.tag_name || rel.name;
+      const date = rel.published_at ? new Date(rel.published_at).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }) : '';
+      const size = apk ? (apk.size / 1048576).toFixed(1) + ' MB' : '';
+      const bits = [ver, size, date].filter(Boolean);
+      document.querySelector('.js-release').textContent = `Latest: ${bits.join(' · ')} — free, straight from GitHub Releases`;
+      document.querySelector('.js-release-meta').textContent = bits.join(' · ');
+    })
+    .catch(() => {});
+
+  // ---------------------------------------------------------------- reveal on scroll
+  const io = 'IntersectionObserver' in window ? new IntersectionObserver(es => es.forEach(en => {
+    if (en.isIntersecting) { en.target.classList.add('in'); io.unobserve(en.target); }
+  }), { rootMargin: '0px 0px -8% 0px' }) : null;
+  document.querySelectorAll('.reveal').forEach(el => io ? io.observe(el) : el.classList.add('in'));
+
+  render();
+})();
+</script>
+</body>
+</html>

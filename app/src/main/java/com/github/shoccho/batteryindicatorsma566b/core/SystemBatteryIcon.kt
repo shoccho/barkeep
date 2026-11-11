@@ -79,7 +79,7 @@ object SystemBatteryIcon {
     private const val KEY = "icon_blacklist"
 
     const val ADB_GRANT_COMMAND =
-        "adb shell pm grant com.github.shoccho.batteryindicatorsma566b android.permission.WRITE_SECURE_SETTINGS"
+        "adb shell pm grant com.github.shoccho.barkeep android.permission.WRITE_SECURE_SETTINGS"
 
     fun hasPermission(context: Context): Boolean =
         context.checkSelfPermission(Manifest.permission.WRITE_SECURE_SETTINGS) ==

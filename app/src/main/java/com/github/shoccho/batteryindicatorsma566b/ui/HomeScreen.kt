@@ -136,7 +136,7 @@ fun HomeScreen() {
         containerColor = MaterialTheme.colorScheme.surface,
         topBar = {
             LargeTopAppBar(
-                title = { Text("Battery Pill") },
+                title = { Text("Barkeep") },
                 scrollBehavior = scroll,
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.surface,
@@ -689,7 +689,7 @@ private fun OwnIconsControls(
     FoldGroup("Icon details", rememberFold("own_icons.details"), summary = details.joinToString(" · ")) {
         SwitchRow(
             "Samsung icon art", s.rowSamsungArt, { v -> update { it.copy(rowSamsungArt = v) } },
-            subtitle = "Uses One UI's own icons from your phone; off = Battery Pill's drawn icons",
+            subtitle = "Uses One UI's own icons from your phone; off = Barkeep's drawn icons",
         )
         SwitchRow("Wi-Fi generation (5 / 6 / 7)", s.rowWifiGeneration, { v -> update { it.copy(rowWifiGeneration = v) } })
         SwitchRow("Data activity arrows", s.rowActivityArrows, { v -> update { it.copy(rowActivityArrows = v) } })
@@ -739,7 +739,7 @@ private fun ColorSection(s: PillSettings, a11yConnected: Boolean, update: ((Pill
             s.colorMode == ColorMode.MATCH && a11yConnected ->
                 Hint("Turns dark or light together with Samsung's icons, in every app.")
             s.colorMode == ColorMode.MATCH ->
-                Hint("Needs the Battery Pill accessibility service (see Permissions). Following the theme until then.")
+                Hint("Needs the Barkeep accessibility service (see Permissions). Following the theme until then.")
         }
         AnimatedVisibility(s.colorMode == ColorMode.CUSTOM) {
             Column {

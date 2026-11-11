@@ -1,6 +1,6 @@
 <resources>
     <!-- DeviceDefault picks up Samsung's One UI look on the phone. -->
-    <style name="Theme.BatteryIndicatorSMA566B" parent="android:Theme.DeviceDefault.DayNight">
+    <style name="Theme.Barkeep" parent="android:Theme.DeviceDefault.DayNight">
         <item name="android:windowActionBar">false</item>
         <item name="android:windowNoTitle">true</item>
     </style>
