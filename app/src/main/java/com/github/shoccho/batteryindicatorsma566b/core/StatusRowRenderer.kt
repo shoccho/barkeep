@@ -32,6 +32,7 @@ class StatusRowRenderer(private val density: Float) {
     private val text = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         typeface = Typeface.create("sans-serif", Typeface.BOLD)
     }
+    private val clearText = Paint(text).apply { xfermode = PorterDuffXfermode(PorterDuff.Mode.CLEAR) }
     private val path = Path()
     private val oval = RectF()
 
@@ -97,10 +98,32 @@ class StatusRowRenderer(private val density: Float) {
     // ---- per-icon width ------------------------------------------------------------------------
 
     private fun iconWidth(icon: StatusIcon, s: PillSettings, st: StatusState, z: Float): Float {
-        artParts(icon, s, st)?.let { parts ->
-            return parts.sumOf { p -> if (p.overlay) 0.0 else ((p.gapBefore + aspect(p.drawable)) * z).toDouble() }.toFloat()
-        }
+        artParts(icon, s, st)?.let { parts -> return layoutArt(parts, 0f, z) { _, _, _ -> } }
         return glyphWidth(icon, s, st, z)
+    }
+
+    /**
+     * Lays [parts] out left to right from [x0], calling [place] with each drawable's left edge
+     * and width, and returns the total width. An overlay sits on the previous part's left edge
+     * (like SystemUI's FrameLayout) and may be wider than it — the 16dp activity arrows under a
+     * 14dp "5G" — so the next part starts after whichever is wider.
+     */
+    private inline fun layoutArt(parts: List<Part>, x0: Float, z: Float, place: (Drawable, Float, Float) -> Unit): Float {
+        var right = x0
+        var lastLeft = x0
+        for (p in parts) {
+            val pw = aspect(p.drawable) * z
+            if (p.overlay) {
+                place(p.drawable, lastLeft, pw)
+                right = max(right, lastLeft + pw)
+            } else {
+                val left = right + p.gapBefore * z
+                place(p.drawable, left, pw)
+                lastLeft = left
+                right = left + pw
+            }
+        }
+        return right - x0
     }
 
     private fun glyphWidth(icon: StatusIcon, s: PillSettings, st: StatusState, z: Float): Float = when (icon) {
@@ -127,12 +150,19 @@ class StatusRowRenderer(private val density: Float) {
 
     private fun mobileWidth(m: MobileState, s: PillSettings, st: StatusState, z: Float): Float {
         var w = 0.85f * z
-        val label = mobileLabel(m, s, st)
-        if (label != null) {
-            text.textSize = 0.62f * z
-            w += text.measureText(label) + 0.08f * z
-            if (s.rowActivityArrows) w += 0.36f * z
-        }
+        if (mobileLabel(m, s, st) != null) w += typeColumnWidth(m, s, st, z) + TYPE_GAP * z
+        return w
+    }
+
+    private fun boxedType(label: String) = label.startsWith("5G")
+
+    /** Width of the drawn network-type column: the label (boxed for 5G) over the ↓↑ arrows. */
+    private fun typeColumnWidth(m: MobileState, s: PillSettings, st: StatusState, z: Float): Float {
+        val label = mobileLabel(m, s, st) ?: return 0f
+        text.textSize = TYPE_TEXT * z
+        var w = text.measureText(label)
+        if (boxedType(label)) w += 2f * TYPE_BOX_PAD * z
+        if (s.rowActivityArrows) w = max(w, ARROWS_WIDTH * z)
         return w
     }
 
@@ -143,19 +173,7 @@ class StatusRowRenderer(private val density: Float) {
         s: PillSettings, st: StatusState, fg: Int, dim: Int,
     ) {
         artParts(icon, s, st)?.let { parts ->
-            var cx = x
-            var lastLeft = x
-            for (p in parts) {
-                cx += p.gapBefore * z
-                val pw = aspect(p.drawable) * z
-                if (p.overlay) {
-                    drawArt(c, p.drawable, lastLeft, y, pw, z, fg)
-                } else {
-                    drawArt(c, p.drawable, cx, y, pw, z, fg)
-                    lastLeft = cx
-                    cx += pw
-                }
-            }
+            layoutArt(parts, x, z) { d, left, pw -> drawArt(c, d, left, y, pw, z, fg) }
             return
         }
         paint.color = fg
@@ -224,8 +242,11 @@ class StatusRowRenderer(private val density: Float) {
                 st.mobile.forEachIndexed { i, m ->
                     val gap = if (i > 0) 0.25f else 0f
                     var first = true
-                    fun gapOnce() = if (first) gap.also { first = false } else 0.05f
-                    mobileLabel(m, s, st)?.let(SamsungArtNames::networkType)?.let(a::drawable)?.let { type ->
+                    // SystemUI pads the type/roaming slots by 2dp on a 14dp icon.
+                    fun gapOnce() = if (first) gap.also { first = false } else TYPE_GAP
+                    mobileLabel(m, s, st)
+                        ?.let { SamsungArtNames.networkType(it, m.fiveGAvailableOnly).firstNotNullOfOrNull(a::drawable) }
+                        ?.let { type ->
                         add(Part(type, gapBefore = gapOnce()))
                         if (s.rowActivityArrows) {
                             a.drawable(SamsungArtNames.dataActivity(st.activityIn, st.activityOut))
@@ -341,14 +362,31 @@ class StatusRowRenderer(private val density: Float) {
     private fun mobile(c: Canvas, x0: Float, y: Float, z: Float, m: MobileState, s: PillSettings, st: StatusState, fg: Int, dim: Int) {
         var x = x0
         mobileLabel(m, s, st)?.let { label ->
-            text.textSize = 0.62f * z
+            val col = typeColumnWidth(m, s, st, z)
+            text.textSize = TYPE_TEXT * z
             text.color = fg
-            c.drawText(label, x, y + 0.72f * z, text)
-            x += text.measureText(label) + 0.08f * z
-            if (s.rowActivityArrows) {
-                arrows(c, x - 0.04f * z, y + 0.15f * z, z, st, fg, dim)
-                x += 0.36f * z
+            val tw = text.measureText(label)
+            val baseline = y + 0.42f * z
+            if (boxedType(label)) {
+                // Outlined while 5G is only available, filled (text knocked out) once connected.
+                val bw = tw + 2f * TYPE_BOX_PAD * z
+                val bx = x + (col - bw) / 2f
+                oval.set(bx, y + 0.02f * z, bx + bw, y + 0.5f * z)
+                val r = 0.1f * z
+                if (m.fiveGAvailableOnly) {
+                    stroke(0.065f * z)
+                    c.drawRoundRect(oval, r, r, paint)
+                    c.drawText(label, bx + TYPE_BOX_PAD * z, baseline, text)
+                } else {
+                    fill()
+                    c.drawRoundRect(oval, r, r, paint)
+                    c.drawText(label, bx + TYPE_BOX_PAD * z, baseline, clearText.also { it.textSize = text.textSize })
+                }
+            } else {
+                c.drawText(label, x + (col - tw) / 2f, baseline, text)
             }
+            if (s.rowActivityArrows) arrows(c, x + (col - ARROWS_WIDTH * z) / 2f, y + 0.58f * z, z, st, fg, dim)
+            x += col + TYPE_GAP * z
         }
         fill()
         val bw = 0.17f * z
@@ -437,6 +475,15 @@ class StatusRowRenderer(private val density: Float) {
         stroke(0.09f * z)
         c.drawLine(cx - 0.15f * z, cy, cx + 0.15f * z, cy, paint)
         c.drawLine(cx, cy - 0.15f * z, cx, cy + 0.15f * z, paint)
+    }
+
+    private companion object {
+        /** Gap between the network-type slot and the bars (SystemUI: 2dp on a 14dp icon). */
+        const val TYPE_GAP = 0.14f
+        /** Drawn-fallback network label size, box padding and the ↓↑ pair's width (× icon size). */
+        const val TYPE_TEXT = 0.4f
+        const val TYPE_BOX_PAD = 0.08f
+        const val ARROWS_WIDTH = 0.6f
     }
 
     private fun dnd(c: Canvas, x: Float, y: Float, z: Float) {

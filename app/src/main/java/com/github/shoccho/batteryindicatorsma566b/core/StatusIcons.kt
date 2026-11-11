@@ -45,6 +45,12 @@ data class MobileState(
     val inService: Boolean = true,
     /** "5G", "LTE", "4G+", "3G"… shown only while mobile carries the internet. */
     val typeLabel: String? = null,
+    /**
+     * 5G is on offer but the phone is on LTE (5G NSA). One UI draws this as an outlined "5G" box
+     * and a filled box once the phone is really on 5G. Android doesn't tell apps whether an NSA
+     * link is carrying data on 5G, so every NSA state counts as "available".
+     */
+    val fiveGAvailableOnly: Boolean = false,
     val roaming: Boolean = false,
 )
 

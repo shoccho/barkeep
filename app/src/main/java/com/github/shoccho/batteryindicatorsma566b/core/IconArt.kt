@@ -58,16 +58,26 @@ object SamsungArtNames {
         }
     }
 
-    fun networkType(label: String): String? = when (label) {
-        "5G" -> "datatype_5g"
-        "4G+" -> "datatype_4gplus"
-        "4G" -> "datatype_4g"
-        "3G" -> "datatype_3g"
-        "H" -> "datatype_h"
-        "H+" -> "datatype_hplus"
-        "E" -> "datatype_e"
-        "G" -> "datatype_g"
-        else -> null
+    /**
+     * Network-type art, best first. One UI 9's status bar uses the full-size
+     * `stat_sys_data_connected_*` labels (top half of the icon, activity arrows drawn underneath);
+     * the small corner `datatype_*` set is only a fallback for SystemUI builds without them.
+     * 5G is an outlined box while it's only available (NSA) and a filled box once connected.
+     */
+    fun networkType(label: String, fiveGAvailableOnly: Boolean = false): List<String> = when (label) {
+        "5G" -> listOfNotNull(
+            "stat_sys_data_connected_5g_available".takeIf { fiveGAvailableOnly },
+            "stat_sys_data_connected_5g",
+            "datatype_5g",
+        )
+        "4G+" -> listOf("stat_sys_data_connected_4g_plus", "datatype_4gplus")
+        "4G" -> listOf("stat_sys_data_connected_4g", "datatype_4g")
+        "3G" -> listOf("stat_sys_data_connected_3g", "datatype_3g")
+        "H" -> listOf("stat_sys_data_connected_h", "datatype_h")
+        "H+" -> listOf("stat_sys_data_connected_h_plus", "datatype_hplus")
+        "E" -> listOf("stat_sys_data_connected_e", "datatype_e")
+        "G" -> listOf("stat_sys_data_connected_g", "datatype_g")
+        else -> emptyList()
     }
 
     fun dataActivity(inActive: Boolean, outActive: Boolean) = when {

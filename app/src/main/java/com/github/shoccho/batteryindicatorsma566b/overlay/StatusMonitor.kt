@@ -290,7 +290,13 @@ class StatusMonitor(private val context: Context) {
             if (hasPermission(Manifest.permission.READ_PHONE_STATE)) {
                 val display = object : TelephonyCallback(), TelephonyCallback.DisplayInfoListener {
                     override fun onDisplayInfoChanged(info: TelephonyDisplayInfo) =
-                        updateMobile(subId) { it.copy(typeLabel = networkLabel(info)) }
+                        updateMobile(subId) {
+                            it.copy(
+                                typeLabel = networkLabel(info),
+                                fiveGAvailableOnly = info.overrideNetworkType ==
+                                    TelephonyDisplayInfo.OVERRIDE_NETWORK_TYPE_NR_NSA,
+                            )
+                        }
                 }
                 safely {
                     tm.registerTelephonyCallback(context.mainExecutor, display)

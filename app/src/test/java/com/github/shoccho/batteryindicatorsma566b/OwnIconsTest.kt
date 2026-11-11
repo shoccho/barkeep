@@ -3,6 +3,7 @@ package com.github.shoccho.batteryindicatorsma566b
 import com.github.shoccho.batteryindicatorsma566b.core.IconBlacklist
 import com.github.shoccho.batteryindicatorsma566b.core.OWN_ICONS_SLOTS
 import com.github.shoccho.batteryindicatorsma566b.core.RingerState
+import com.github.shoccho.batteryindicatorsma566b.core.SamsungArtNames
 import com.github.shoccho.batteryindicatorsma566b.core.StatusIcon
 import com.github.shoccho.batteryindicatorsma566b.core.StatusState
 import com.github.shoccho.batteryindicatorsma566b.core.WifiState
@@ -58,5 +59,17 @@ class OwnIconsTest {
         assertEquals(6, StatusMonitor.wifiGeneration(6))  // 802.11ax
         assertEquals(7, StatusMonitor.wifiGeneration(8))  // 802.11be
         assertNull(StatusMonitor.wifiGeneration(1))       // legacy
+    }
+
+    @Test fun networkTypeUsesOneUisFullSizeLabelsFirst() {
+        // One UI 9 draws "5G" as an outlined box while 5G is only available (NSA)…
+        assertEquals("stat_sys_data_connected_5g_available", SamsungArtNames.networkType("5G", fiveGAvailableOnly = true).first())
+        // …and as a filled box once connected; the small corner art is only a fallback.
+        assertEquals(listOf("stat_sys_data_connected_5g", "datatype_5g"), SamsungArtNames.networkType("5G"))
+        assertEquals("stat_sys_data_connected_4g_plus", SamsungArtNames.networkType("4G+").first())
+        assertEquals("stat_sys_data_connected_h_plus", SamsungArtNames.networkType("H+").first())
+        // Only 5G has an "available" variant.
+        assertEquals("stat_sys_data_connected_4g", SamsungArtNames.networkType("4G", fiveGAvailableOnly = true).first())
+        assertTrue(SamsungArtNames.networkType("?").isEmpty())
     }
 }
