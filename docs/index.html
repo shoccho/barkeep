@@ -263,6 +263,24 @@ h3 { font-size: 19px; letter-spacing: -.01em; margin: 0 0 6px; line-height: 1.3;
 .fp { margin-top: 18px; font-size: 12.5px; color: var(--faint); word-break: break-all; }
 .fp code { font-family: var(--mono); color: var(--muted); }
 
+/* adb setup */
+.adb-card { margin-top: 16px; padding: 26px; min-width: 0; scroll-margin-top: 76px; }
+.adb-card > p { margin-top: 6px; }
+.prep { display: grid; gap: 4px; margin: 18px 0; padding: 14px 16px; border-radius: 14px; background: rgba(156,140,255,.08); border: 1px solid rgba(156,140,255,.22); color: var(--muted); font-size: 15px; }
+.prep b { color: var(--text); }
+.tabs { margin-bottom: 18px; }
+.tabs button { font-size: 14px; }
+.mini-steps { margin: 0; padding-left: 22px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; color: var(--muted); font-size: 15.5px; }
+.mini-steps li { min-width: 0; }
+.mini-steps li::marker { color: var(--mint); font-weight: 700; }
+.mini-steps b, .card .mini-steps b { color: var(--text); }
+.mini-steps a b { color: var(--mint); }
+.card .note { margin-top: 18px; font-size: 13.5px; color: var(--faint); line-height: 1.55; }
+.note code, .card p code { font-family: var(--mono); font-size: .92em; color: var(--muted); background: rgba(255,255,255,.06); padding: 1px 5px; border-radius: 5px; }
+.cmd-label { margin-top: 14px; font-size: 13px; color: var(--faint); }
+.cmd-label + .code { margin-top: 6px; }
+.card p b { color: var(--text); }
+
 /* FAQ */
 details { border-bottom: 1px solid var(--line); }
 summary { cursor: pointer; list-style: none; padding: 18px 40px 18px 0; position: relative; font-weight: 650; font-size: 16.5px; }
@@ -643,16 +661,68 @@ footer .wrap { display: flex; flex-wrap: wrap; gap: 12px 24px; align-items: cent
     </div>
 
     <ol class="steps" style="margin-top: 16px;">
-      <li class="card reveal"><h3>Download and open the APK</h3><p>Your browser will ask to allow installs from this source the first time — allow it, then tap Install.</p></li>
-      <li class="card reveal"><h3>Allow "Appear on top"</h3><p>The only required permission. Flip the main switch in Barkeep and it takes you straight there.</p></li>
-      <li class="card reveal"><h3>Allow unrestricted battery use <span class="opt">Recommended</span></h3><p>Stops One UI from putting the pill to sleep in the background.</p></li>
-      <li class="card reveal"><h3>Turn on the accessibility service <span class="opt">For Samsung's spot, Own icons, Match icons</span></h3><p>Lets Barkeep see where Samsung's battery is and what colour its icons are.</p></li>
       <li class="card reveal">
-        <h3>Run one adb command <span class="opt">For hiding Samsung's icons</span></h3>
-        <p>From a computer with USB debugging on, once. Barkeep can then hide Samsung's battery (and, in Own icons, its other icons) and bring them back when the pill is off.</p>
-        <div class="code"><code id="adb">adb shell pm grant com.github.shoccho.barkeep android.permission.WRITE_SECURE_SETTINGS</code><button type="button" class="btn btn-ghost btn-sm js-copy" data-target="adb">Copy</button></div>
+        <h3>Download and open the APK</h3>
+        <p>Your browser asks to allow installs from this source the first time — allow it, then tap Install. If One UI says the install was blocked, turn off <b>Auto Blocker</b> (Settings › Security and privacy › Auto Blocker) just for the install, then turn it back on.</p>
       </li>
+      <li class="card reveal"><h3>Allow "Appear on top"</h3><p>The only required permission. Flip the main switch in Barkeep and it takes you straight there.</p></li>
+      <li class="card reveal"><h3>Allow unrestricted battery use <span class="opt">Recommended</span></h3><p>Stops One UI from putting the pill to sleep in the background. Barkeep has an Allow button for it under Permissions.</p></li>
+      <li class="card reveal">
+        <h3>Do the one-time adb step <span class="opt">Recommended</span></h3>
+        <p>One command, run once, from a computer — <a href="#adb">in your browser, no install needed</a>. It lets Barkeep hide Samsung's battery and icons (needed for Own icons) and turn its accessibility service on with one tap.</p>
+      </li>
+      <li class="card reveal">
+        <h3>Turn on the accessibility service <span class="opt">For Samsung's spot, Own icons, Match icons</span></h3>
+        <p>After the adb step, just tap <b>Turn on</b> under Permissions in Barkeep. Without it: Settings › Accessibility › Installed apps › Barkeep. If that switch is greyed out as a <i>restricted setting</i>, open Barkeep's App info, tap ⋮ in the top corner, choose <b>Allow restricted settings</b>, and try again.</p>
+      </li>
+      <li class="card reveal"><h3>Allow Phone &amp; Nearby devices <span class="opt">Optional, for Own icons</span></h3><p>Phone shows both SIMs and the 5G / 4G label; Nearby devices shows when Bluetooth is connected. Both are under Permissions in Barkeep.</p></li>
     </ol>
+
+    <div class="card adb-card reveal" id="adb">
+      <span class="kicker">The one-time adb step</span>
+      <h3 style="font-size: 22px; margin-top: 8px;">Give Barkeep its extra permission</h3>
+      <p>Android only lets a computer grant this permission, over USB. You do it once; it stays after you unplug, restart or update Barkeep.</p>
+
+      <div class="prep">
+        <b>First, on your phone: turn on USB debugging.</b>
+        <span>Settings › About phone › Software information › tap <b>Build number</b> 7 times. Then Settings › <b>Developer options</b> › turn on <b>USB debugging</b>.</span>
+      </div>
+
+      <div class="seg tabs" role="tablist" aria-label="How to run the command">
+        <button type="button" role="tab" data-tab="web" aria-selected="true" aria-pressed="true">In your browser · nothing to install</button>
+        <button type="button" role="tab" data-tab="cli" aria-selected="false" aria-pressed="false">With adb</button>
+      </div>
+
+      <div class="panel" data-panel="web">
+        <ol class="mini-steps">
+          <li>Plug your phone into a computer with a USB cable.</li>
+          <li>On the computer, open <a href="https://app.tangoapp.dev/" target="_blank" rel="noopener"><b>app.tangoapp.dev</b></a> in <b>Chrome</b> or <b>Edge</b>. Choose to add a USB device, pick your phone and connect.</li>
+          <li>On the phone, tap <b>Allow</b> when it asks “Allow USB debugging?”.</li>
+          <li>In Tango, open <b>Shell</b>, paste this and press Enter:
+            <div class="code"><code id="tango-grant">pm grant com.github.shoccho.barkeep android.permission.WRITE_SECURE_SETTINGS</code><button type="button" class="btn btn-ghost btn-sm js-copy" data-target="tango-grant">Copy</button></div>
+          </li>
+          <li>Back in Barkeep, Permissions now shows the adb grant as done. You can turn USB debugging off again.</li>
+        </ol>
+        <p class="note">Tango is a free, open-source ADB that runs inside the browser using WebUSB. It isn't part of Barkeep. It works in Chrome, Edge and other Chromium browsers, not Safari or Firefox. If adb is already running on that computer, quit it first (<code>adb kill-server</code>) — only one program can talk to the phone at a time. Tango can also install the APK for you, and runs any command from the other tab — leave out the <code>adb shell</code> part.</p>
+      </div>
+
+      <div class="panel" data-panel="cli" hidden>
+        <p style="margin-bottom: 4px;">With <a href="https://developer.android.com/tools/releases/platform-tools" target="_blank" rel="noopener">Android platform-tools</a> installed and your phone plugged in:</p>
+        <div class="code"><code id="adb-grant">adb shell pm grant com.github.shoccho.barkeep android.permission.WRITE_SECURE_SETTINGS</code><button type="button" class="btn btn-ghost btn-sm js-copy" data-target="adb-grant">Copy</button></div>
+        <p style="margin: 18px 0 4px;"><b style="color: var(--text);">Optional — set up everything else from the computer too.</b> Each of these can also be done in the app.</p>
+        <div class="cmd-label">Install the APK (installing over USB also avoids the restricted-settings prompt)</div>
+        <div class="code"><code id="adb-install">adb install Barkeep.apk</code><button type="button" class="btn btn-ghost btn-sm js-copy" data-target="adb-install">Copy</button></div>
+        <div class="cmd-label">Allow “Appear on top”</div>
+        <div class="code"><code id="adb-overlay">adb shell appops set com.github.shoccho.barkeep SYSTEM_ALERT_WINDOW allow</code><button type="button" class="btn btn-ghost btn-sm js-copy" data-target="adb-overlay">Copy</button></div>
+        <div class="cmd-label">Unrestricted battery use</div>
+        <div class="code"><code id="adb-battery">adb shell dumpsys deviceidle whitelist +com.github.shoccho.barkeep</code><button type="button" class="btn btn-ghost btn-sm js-copy" data-target="adb-battery">Copy</button></div>
+        <div class="cmd-label">Phone (both SIMs, 5G / 4G label)</div>
+        <div class="code"><code id="adb-phone">adb shell pm grant com.github.shoccho.barkeep android.permission.READ_PHONE_STATE</code><button type="button" class="btn btn-ghost btn-sm js-copy" data-target="adb-phone">Copy</button></div>
+        <div class="cmd-label">Nearby devices (Bluetooth connected)</div>
+        <div class="code"><code id="adb-bt">adb shell pm grant com.github.shoccho.barkeep android.permission.BLUETOOTH_CONNECT</code><button type="button" class="btn btn-ghost btn-sm js-copy" data-target="adb-bt">Copy</button></div>
+      </div>
+    </div>
+
     <p class="fp">Signing certificate SHA-256: <code>51:EC:86:9B:CC:79:F5:E3:A6:9F:FD:AB:32:00:7E:EA:2E:14:E6:65:76:70:40:63:77:FE:95:C2:65:01:BC:96</code></p>
   </div>
 </section>
@@ -666,7 +736,8 @@ footer .wrap { display: flex; flex-wrap: wrap; gap: 12px 24px; align-items: cent
     <details><summary>Will it work on my phone?</summary><p>Barkeep needs Android 16 or later — One UI 8.5 or One UI 9. It's built and tuned on a Galaxy A56 running One UI 9, and the default sizes match that phone's stock battery. Other Galaxy phones on One UI 8.5 or 9 should work, and Free placement works on any Android 16+ phone, but they haven't been tested.</p></details>
     <details><summary>Why does it need "Appear on top"?</summary><p>That's how an app draws over the status bar. Without it, there's nowhere to put the pill.</p></details>
     <details><summary>Why the accessibility service?</summary><p>It's optional. It lets Barkeep draw above the status bar in Samsung's exact battery spot and read the colour of the status icons for Match icons. It reads nothing else.</p></details>
-    <details><summary>Why an adb command?</summary><p>Hiding Samsung's own icons uses a system setting only adb can unlock — the same switch Good Lock's QuickStar flips. You run it once; without it, everything else still works.</p></details>
+    <details><summary>Why an adb command?</summary><p>Hiding Samsung's own icons uses a system setting only adb can unlock — the same switch Good Lock's QuickStar flips. You run it once, and <a href="#adb">you don't need to install anything</a>: a browser-based adb does it from Chrome or Edge. Without it, everything except hiding Samsung's icons still works.</p></details>
+    <details><summary>Can I do the adb step without a computer?</summary><p>Not from Barkeep itself — Android only lets this permission be granted over adb. The browser route needs any computer with Chrome or Edge for a minute; nothing gets installed on it.</p></details>
     <details><summary>How do I get Samsung's battery back?</summary><p>Turn the pill off — from the app or the Quick Settings tile. Barkeep restores Samsung's battery and status icons exactly as they were.</p></details>
     <details><summary>Does it drain the battery?</summary><p>The charging shimmer pauses when the screen is off, and Match icons samples colour only in short bursts while the screen is changing, backing off in busy apps.</p></details>
     <details><summary>Does it ship Samsung's icons?</summary><p>No. In Own icons, Barkeep borrows the icon art already installed on your phone with One UI, and falls back to its own drawn icons if any are missing.</p></details>
@@ -909,6 +980,12 @@ footer .wrap { display: flex; flex-wrap: wrap; gap: 12px 24px; align-items: cent
     else if (t.dataset.flag) S[t.dataset.flag] = !S[t.dataset.flag];
     else if (t.dataset.toggleIcon) { const k = t.dataset.toggleIcon; S.shown.has(k) ? S.shown.delete(k) : S.shown.add(k); }
     else if (t.dataset.moveIcon) { const i = S.order.indexOf(t.dataset.moveIcon); if (i > 0) [S.order[i - 1], S.order[i]] = [S.order[i], S.order[i - 1]]; }
+    else if (t.dataset.tab) {
+      const card = t.closest('.adb-card');
+      card.querySelectorAll('[data-tab]').forEach(b => { const on = b === t; b.setAttribute('aria-selected', on); b.setAttribute('aria-pressed', on); });
+      card.querySelectorAll('[data-panel]').forEach(p => { p.hidden = p.dataset.panel !== t.dataset.tab; });
+      return;
+    }
     else if (t.classList.contains('js-copy')) { copy(document.getElementById(t.dataset.target).textContent); return; }
     else return;
     render();
