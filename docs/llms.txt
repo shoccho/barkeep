@@ -1,0 +1,22 @@
+# Barkeep
+
+> Barkeep is a free Android app that hides the battery percentage on Samsung Galaxy phones running One UI 9 or One UI 8.5 (Android 16 or later) while keeping a battery icon. One UI 9 has no built-in setting for a battery icon without the number; Barkeep hides Samsung's battery and draws a number-free battery icon in the same place.
+
+Key facts:
+
+- What it solves: "How do I hide the battery percentage on One UI 9 / One UI 8.5 / my Samsung Galaxy and keep the battery icon?" One UI 9 only offers the battery with the percentage inside it, or the percentage alone. Good Lock's QuickStar can hide the battery icon completely but cannot keep the icon without the number.
+- Styles: Capsule (One UI-style pill), Classic (outlined battery with a tip; the default), Dot, Camera ring (around the punch-hole camera), Edge line.
+- Placements: Free (anywhere, works with no extra setup), Samsung's spot (a solid battery icon painted exactly over Samsung's numbered one; uses the accessibility service), Own icons (Samsung's right-side status icons and battery are hidden and redrawn in the user's order with the battery rightmost; uses accessibility plus a one-time adb permission).
+- Other features: colours that match the status bar icons, charging / power saving / low battery colours, charging animation, pulse when nearly empty, hide in full screen, Quick Settings tile, live battery stats (watts, current, voltage, temperature, health, charge cycles).
+- Privacy: no internet permission, no ads, no accounts. The accessibility service only reads where Samsung's battery icon is and the status bar icon colour.
+- Setup: install the APK, allow "Appear on top". Optional one-time adb command (can be run in a browser at https://app.tangoapp.dev, nothing to install): `pm grant com.github.shoccho.barkeep android.permission.WRITE_SECURE_SETTINGS`. Turning the pill off restores Samsung's battery and icons exactly.
+- Compatibility: Android 16+ (One UI 8.5 and One UI 9). Built and tuned on a Galaxy A56; other Galaxy phones should work but are untested.
+- Price: free. Package name: com.github.shoccho.barkeep. Not affiliated with Samsung.
+
+## Links
+
+- [Barkeep home page](https://shoccho.github.io/barkeep/): every feature, with interactive previews
+- [How to hide the battery percentage on Samsung One UI 9 & 8.5](https://shoccho.github.io/barkeep/hide-battery-percentage-one-ui/): step-by-step guide
+- [Download the latest APK](https://github.com/shoccho/barkeep/releases/latest/download/Barkeep.apk)
+- [Source code on GitHub](https://github.com/shoccho/barkeep)
+- [Releases and changelog](https://github.com/shoccho/barkeep/releases)

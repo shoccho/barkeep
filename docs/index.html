@@ -3,13 +3,24 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Barkeep — your status bar, kept your way</title>
-<meta name="description" content="Barkeep gives Samsung Galaxy phones on One UI 8.5 and 9 a battery pill without the number, five indicator styles, a re-orderable status icon row, colours that match your icons, and live battery stats. No internet permission.">
+<title>Hide the battery percentage on Samsung One UI — Barkeep</title>
+<meta name="description" content="Hide the battery percentage on Samsung Galaxy phones with One UI 9 or 8.5. Barkeep keeps the battery icon and drops the number. Free, no ads, no internet permission.">
+<meta name="robots" content="index, follow, max-image-preview:large">
+<link rel="canonical" href="https://shoccho.github.io/barkeep/">
 <meta name="theme-color" content="#0B0A1A">
-<meta property="og:title" content="Barkeep — your status bar, kept your way">
-<meta property="og:description" content="A number-free battery pill and a status bar you arrange yourself, for Samsung Galaxy on One UI 8.5 and 9.">
-<meta property="og:image" content="icon-512.png">
 <meta property="og:type" content="website">
+<meta property="og:site_name" content="Barkeep">
+<meta property="og:url" content="https://shoccho.github.io/barkeep/">
+<meta property="og:title" content="Hide the battery percentage on Samsung One UI — Barkeep">
+<meta property="og:description" content="Keep Samsung's battery icon, lose the number. A free app for Galaxy phones on One UI 8.5 and 9.">
+<meta property="og:image" content="https://shoccho.github.io/barkeep/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="One UI's battery icon with the number 72 next to Barkeep's battery icon without a number">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Hide the battery percentage on Samsung One UI — Barkeep">
+<meta name="twitter:description" content="Keep Samsung's battery icon, lose the number. Free for Galaxy phones on One UI 8.5 and 9.">
+<meta name="twitter:image" content="https://shoccho.github.io/barkeep/og.png">
 <link rel="icon" href="icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <style>
@@ -312,6 +323,8 @@ footer .wrap { display: flex; flex-wrap: wrap; gap: 12px 24px; align-items: cent
 .toast.show { opacity: 1; transform: translate(-50%, 0); }
 .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 </style>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "SoftwareApplication", "name": "Barkeep", "alternateName": "Barkeep — battery icon without percentage for One UI", "description": "Android app that hides the battery percentage on Samsung Galaxy phones with One UI 8.5 and 9, keeping a battery icon without the number. Five indicator styles, a re-orderable status icon row, colours that match the status bar, and live battery stats.", "url": "https://shoccho.github.io/barkeep/", "downloadUrl": "https://github.com/shoccho/barkeep/releases/latest/download/Barkeep.apk", "installUrl": "https://github.com/shoccho/barkeep/releases/latest/download/Barkeep.apk", "image": "https://shoccho.github.io/barkeep/og.png", "screenshot": "https://shoccho.github.io/barkeep/og.png", "applicationCategory": "UtilitiesApplication", "operatingSystem": "Android 16 or later (Samsung One UI 8.5, One UI 9)", "softwareVersion": "1.1", "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"}, "author": {"@type": "Person", "name": "shoccho", "url": "https://github.com/shoccho"}, "codeRepository": "https://github.com/shoccho/barkeep", "featureList": ["Hide the battery percentage while keeping a battery icon", "Five styles: Capsule, Classic, Dot, Camera ring, Edge line", "Place it exactly over Samsung's battery icon", "Re-orderable One UI status icons", "Match the status bar icon colour", "Charging, power saving and low battery colours", "Live battery stats", "No internet permission"]}</script>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "How do I hide the battery percentage on One UI 9?", "acceptedAnswer": {"@type": "Answer", "text": "One UI 9 has no setting that keeps the battery icon without the number — it shows the battery with the percentage inside it, or the percentage alone. Install Barkeep, allow “Appear on top”, and pick a placement: Samsung's spot paints a battery icon exactly over Samsung's numbered one, and Own icons hides Samsung's battery and draws its own in the same place. Step-by-step guide."}}, {"@type": "Question", "name": "Can I show the battery icon without the percentage on a Samsung phone?", "acceptedAnswer": {"@type": "Answer", "text": "Not with One UI's own settings on One UI 9. Barkeep adds it: a battery icon with no number, in five styles, sitting where Samsung's battery was. It works on One UI 8.5 and 9."}}, {"@type": "Question", "name": "Can Good Lock's QuickStar do this?", "acceptedAnswer": {"@type": "Answer", "text": "QuickStar can hide the battery icon completely, but it can't keep the icon and drop the number. Barkeep uses the same system switch to hide Samsung's battery, then draws its own number-free battery in its place."}}, {"@type": "Question", "name": "Is Barkeep free and safe?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. It's free, has no ads or accounts, and Android never gives it internet access, so nothing can leave your phone. The source code is on GitHub."}}, {"@type": "Question", "name": "Will it work on my phone?", "acceptedAnswer": {"@type": "Answer", "text": "Barkeep needs Android 16 or later — One UI 8.5 or One UI 9. It's built and tuned on a Galaxy A56 running One UI 9, and the default sizes match that phone's stock battery. Other Galaxy phones on One UI 8.5 or 9 should work, and Free placement works on any Android 16+ phone, but they haven't been tested."}}, {"@type": "Question", "name": "Why does it need \"Appear on top\"?", "acceptedAnswer": {"@type": "Answer", "text": "That's how an app draws over the status bar. Without it, there's nowhere to put the pill."}}, {"@type": "Question", "name": "Why the accessibility service?", "acceptedAnswer": {"@type": "Answer", "text": "It's optional. It lets Barkeep draw above the status bar in Samsung's exact battery spot and read the colour of the status icons for Match icons. It reads nothing else."}}, {"@type": "Question", "name": "Why an adb command?", "acceptedAnswer": {"@type": "Answer", "text": "Hiding Samsung's own icons uses a system setting only adb can unlock — the same switch Good Lock's QuickStar flips. You run it once, and you don't need to install anything: a browser-based adb does it from Chrome or Edge. Without it, everything except hiding Samsung's icons still works."}}, {"@type": "Question", "name": "Can I do the adb step without a computer?", "acceptedAnswer": {"@type": "Answer", "text": "Not from Barkeep itself — Android only lets this permission be granted over adb. The browser route needs any computer with Chrome or Edge for a minute; nothing gets installed on it."}}, {"@type": "Question", "name": "How do I get Samsung's battery back?", "acceptedAnswer": {"@type": "Answer", "text": "Turn the pill off — from the app or the Quick Settings tile. Barkeep restores Samsung's battery and status icons exactly as they were."}}, {"@type": "Question", "name": "Does it drain the battery?", "acceptedAnswer": {"@type": "Answer", "text": "The charging shimmer pauses when the screen is off, and Match icons samples colour only in short bursts while the screen is changing, backing off in busy apps."}}, {"@type": "Question", "name": "Does it ship Samsung's icons?", "acceptedAnswer": {"@type": "Answer", "text": "No. In Own icons, Barkeep borrows the icon art already installed on your phone with One UI, and falls back to its own drawn icons if any are missing."}}]}</script>
 </head>
 <body>
 
@@ -339,7 +352,7 @@ footer .wrap { display: flex; flex-wrap: wrap; gap: 12px 24px; align-items: cent
       <span class="eyebrow"><i></i>For Samsung Galaxy · One UI 8.5 &amp; 9</span>
       <h1>Your status bar,<br><span class="grad">kept your way.</span></h1>
       <p class="lead">
-        One UI 9 only lets you show the battery <em>with</em> a number. <strong>Barkeep draws a clean battery pill without it</strong> — then goes further: five indicator styles, a status icon row you arrange yourself, colours that follow your icons, and live battery stats.
+        One UI 9 only lets you show the battery <em>with</em> a number. <strong>Barkeep hides the battery percentage and keeps a clean battery icon</strong> — then goes further: five indicator styles, a status icon row you arrange yourself, colours that follow your icons, and live battery stats.
       </p>
       <div class="cta">
         <a class="btn btn-primary js-download" href="https://github.com/shoccho/barkeep/releases/latest/download/Barkeep.apk">
@@ -386,7 +399,7 @@ footer .wrap { display: flex; flex-wrap: wrap; gap: 12px 24px; align-items: cent
   <div class="wrap">
     <div class="sec-head reveal">
       <span class="kicker">The idea</span>
-      <h2>See how full it is at a glance. Skip the number.</h2>
+      <h2>Hide the battery percentage. Keep the battery icon.</h2>
       <p>A shape tells you everything you need — mostly full, half, nearly empty — without a percentage pulling your eye every time you look at the screen. Barkeep puts that shape exactly where Samsung's battery lives, so nothing else on your status bar has to move.</p>
     </div>
     <div class="compare reveal">
@@ -733,6 +746,10 @@ footer .wrap { display: flex; flex-wrap: wrap; gap: 12px 24px; align-items: cent
       <span class="kicker">FAQ</span>
       <h2>Questions</h2>
     </div>
+    <details><summary>How do I hide the battery percentage on One UI 9?</summary><p>One UI 9 has no setting that keeps the battery icon without the number — it shows the battery with the percentage inside it, or the percentage alone. Install Barkeep, allow “Appear on top”, and pick a placement: <b>Samsung's spot</b> paints a battery icon exactly over Samsung's numbered one, and <b>Own icons</b> hides Samsung's battery and draws its own in the same place. <a href="hide-battery-percentage-one-ui/">Step-by-step guide</a>.</p></details>
+    <details><summary>Can I show the battery icon without the percentage on a Samsung phone?</summary><p>Not with One UI's own settings on One UI 9. Barkeep adds it: a battery icon with no number, in five styles, sitting where Samsung's battery was. It works on One UI 8.5 and 9.</p></details>
+    <details><summary>Can Good Lock's QuickStar do this?</summary><p>QuickStar can hide the battery icon completely, but it can't keep the icon and drop the number. Barkeep uses the same system switch to hide Samsung's battery, then draws its own number-free battery in its place.</p></details>
+    <details><summary>Is Barkeep free and safe?</summary><p>Yes. It's free, has no ads or accounts, and Android never gives it internet access, so nothing can leave your phone. The source code is on <a href="https://github.com/shoccho/barkeep">GitHub</a>.</p></details>
     <details><summary>Will it work on my phone?</summary><p>Barkeep needs Android 16 or later — One UI 8.5 or One UI 9. It's built and tuned on a Galaxy A56 running One UI 9, and the default sizes match that phone's stock battery. Other Galaxy phones on One UI 8.5 or 9 should work, and Free placement works on any Android 16+ phone, but they haven't been tested.</p></details>
     <details><summary>Why does it need "Appear on top"?</summary><p>That's how an app draws over the status bar. Without it, there's nowhere to put the pill.</p></details>
     <details><summary>Why the accessibility service?</summary><p>It's optional. It lets Barkeep draw above the status bar in Samsung's exact battery spot and read the colour of the status icons for Match icons. It reads nothing else.</p></details>
@@ -748,6 +765,7 @@ footer .wrap { display: flex; flex-wrap: wrap; gap: 12px 24px; align-items: cent
   <div class="wrap">
     <a class="brand" href="#top"><img src="icon.svg" alt="" width="26" height="26">Barkeep</a>
     <span>Not affiliated with Samsung. Galaxy and One UI are trademarks of Samsung Electronics.</span>
+    <a href="hide-battery-percentage-one-ui/">How to hide the battery percentage on One UI</a>
     <a href="https://github.com/shoccho/barkeep">Source on GitHub</a>
   </div>
 </footer>

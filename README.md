@@ -1,17 +1,18 @@
 <p align="center"><img src="docs/icon.svg" width="96" alt="Barkeep icon"></p>
 
 <h1 align="center">Barkeep</h1>
-<p align="center"><b>Your status bar, kept your way.</b><br>
-A number-free battery pill and a status icon row you arrange yourself, for Samsung Galaxy phones on One UI 8.5 and 9.</p>
+<p align="center"><b>Hide the battery percentage on Samsung One UI — keep the battery icon.</b><br>
+A number-free battery icon and a status icon row you arrange yourself, for Samsung Galaxy phones on One UI 8.5 and 9.</p>
 
 <p align="center">
   <a href="https://shoccho.github.io/barkeep/">Website</a> ·
-  <a href="https://github.com/shoccho/barkeep/releases/latest/download/Barkeep.apk">Download the APK</a>
+  <a href="https://github.com/shoccho/barkeep/releases/latest/download/Barkeep.apk">Download the APK</a> ·
+  <a href="https://shoccho.github.io/barkeep/hide-battery-percentage-one-ui/">How to hide the battery percentage on One UI</a>
 </p>
 
 ---
 
-One UI 9 only lets you show the battery with the percentage. Barkeep draws a battery pill without it — and goes further:
+**How do I hide the battery percentage on One UI 9?** One UI 9 only lets you show the battery with the percentage inside it, or the percentage alone — there's no setting for the icon without the number. Barkeep hides Samsung's battery and draws a number-free battery icon in the same place — and goes further:
 
 - **Five styles** — Capsule, Classic, Dot, Camera ring (wraps the punch-hole camera) and Edge line.
 - **Three placements** — *Free* (anywhere), *Samsung's spot* (painted exactly over Samsung's battery, hiding its number) and *Own icons* (Samsung's right-side icons redrawn in your order, with the pill rightmost).

@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>How to hide the battery percentage on Samsung One UI 9 &amp; 8.5</title>
+<meta name="description" content="One UI 9 has no setting for a battery icon without the number. Here's how to hide the battery percentage on a Samsung Galaxy and keep the icon, step by step, free.">
+<meta name="robots" content="index, follow, max-image-preview:large">
+<link rel="canonical" href="https://shoccho.github.io/barkeep/hide-battery-percentage-one-ui/">
+<meta name="theme-color" content="#0B0A1A">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="Barkeep">
+<meta property="og:url" content="https://shoccho.github.io/barkeep/hide-battery-percentage-one-ui/">
+<meta property="og:title" content="How to hide the battery percentage on Samsung One UI 9 & 8.5">
+<meta property="og:description" content="Keep Samsung's battery icon, lose the number — step by step, free.">
+<meta property="og:image" content="https://shoccho.github.io/barkeep/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="One UI's battery icon with the number 72 next to Barkeep's battery icon without a number">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://shoccho.github.io/barkeep/og.png">
+<link rel="icon" href="../icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="../apple-touch-icon.png">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Article",
+  "headline": "How to hide the battery percentage on Samsung One UI 9 & 8.5",
+  "description": "One UI 9 has no setting for a battery icon without the number. How to hide the battery percentage on a Samsung Galaxy and keep the icon, using the free Barkeep app.",
+  "image": "https://shoccho.github.io/barkeep/og.png",
+  "datePublished": "2026-11-11",
+  "dateModified": "2026-11-11",
+  "author": { "@type": "Person", "name": "shoccho", "url": "https://github.com/shoccho" },
+  "publisher": { "@type": "Person", "name": "shoccho", "url": "https://github.com/shoccho" },
+  "mainEntityOfPage": "https://shoccho.github.io/barkeep/hide-battery-percentage-one-ui/",
+  "about": [
+    { "@type": "Thing", "name": "Samsung One UI" },
+    { "@type": "Thing", "name": "Battery percentage in the Android status bar" }
+  ]
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "HowTo",
+  "name": "Hide the battery percentage on Samsung One UI and keep the battery icon",
+  "description": "Use the free Barkeep app to show a battery icon without the number on a Galaxy phone running One UI 8.5 or 9.",
+  "image": "https://shoccho.github.io/barkeep/og.png",
+  "totalTime": "PT5M",
+  "estimatedCost": { "@type": "MonetaryAmount", "currency": "USD", "value": "0" },
+  "tool": [{ "@type": "HowToTool", "name": "Barkeep (free Android app)" }],
+  "step": [
+    { "@type": "HowToStep", "position": 1, "name": "Install Barkeep", "text": "Download Barkeep.apk from https://shoccho.github.io/barkeep/ and open it to install. Allow installs from your browser when asked.", "url": "https://shoccho.github.io/barkeep/hide-battery-percentage-one-ui/#step-install" },
+    { "@type": "HowToStep", "position": 2, "name": "Allow Appear on top", "text": "Open Barkeep and turn on the main switch. It takes you to the Appear on top setting; allow it.", "url": "https://shoccho.github.io/barkeep/hide-battery-percentage-one-ui/#step-overlay" },
+    { "@type": "HowToStep", "position": 3, "name": "Run the one-time adb command", "text": "With USB debugging on, open app.tangoapp.dev in Chrome or Edge on a computer, connect your phone, open Shell and run: pm grant com.github.shoccho.barkeep android.permission.WRITE_SECURE_SETTINGS", "url": "https://shoccho.github.io/barkeep/hide-battery-percentage-one-ui/#step-adb" },
+    { "@type": "HowToStep", "position": 4, "name": "Turn on the accessibility service", "text": "In Barkeep, open Permissions and tap Turn on next to the accessibility service.", "url": "https://shoccho.github.io/barkeep/hide-battery-percentage-one-ui/#step-a11y" },
+    { "@type": "HowToStep", "position": 5, "name": "Choose Own icons or Samsung's spot", "text": "Under Position, choose Own icons (Samsung's battery is hidden and Barkeep draws its own in the same place) or Samsung's spot (Barkeep paints a battery icon exactly over Samsung's numbered one).", "url": "https://shoccho.github.io/barkeep/hide-battery-percentage-one-ui/#step-place" }
+  ]
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    { "@type": "Question", "name": "Is there a setting in One UI 9 to show the battery icon without the percentage?", "acceptedAnswer": { "@type": "Answer", "text": "No. One UI 9 shows the battery with the percentage inside it, or the percentage alone. To keep the icon and drop the number you need an app such as Barkeep." } },
+    { "@type": "Question", "name": "Can Good Lock's QuickStar hide the battery percentage?", "acceptedAnswer": { "@type": "Answer", "text": "QuickStar can hide the battery icon completely, but it can't keep the icon without the number. Barkeep hides Samsung's battery the same way and draws a number-free battery icon in its place." } },
+    { "@type": "Question", "name": "Does it work on One UI 8.5 and other Galaxy phones?", "acceptedAnswer": { "@type": "Answer", "text": "Barkeep needs Android 16 or later, so it installs on One UI 8.5 and One UI 9. It's tuned on a Galaxy A56; other Galaxy phones should work but haven't been tested." } },
+    { "@type": "Question", "name": "How do I get the battery percentage back?", "acceptedAnswer": { "@type": "Answer", "text": "Turn Barkeep's pill off, from the app or its Quick Settings tile. Samsung's battery and status icons come back exactly as they were." } },
+    { "@type": "Question", "name": "Do I need a computer?", "acceptedAnswer": { "@type": "Answer", "text": "Only for the one-time adb step, and only for a minute: a browser-based adb at app.tangoapp.dev runs it from Chrome or Edge with nothing to install. Without it, Barkeep can still cover Samsung's number using Samsung's spot." } }
+  ]
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    { "@type": "ListItem", "position": 1, "name": "Barkeep", "item": "https://shoccho.github.io/barkeep/" },
+    { "@type": "ListItem", "position": 2, "name": "Hide the battery percentage on One UI", "item": "https://shoccho.github.io/barkeep/hide-battery-percentage-one-ui/" }
+  ]
+}
+</script>
+<style>
+:root {
+  color-scheme: dark;
+  --bg: #0B0A1A; --surface: #15132E; --line: rgba(255,255,255,.08); --line-2: rgba(255,255,255,.14);
+  --text: #EEEDFB; --muted: #A9A6CC; --faint: #77739C; --mint: #7DF9CF; --green: #2FD483; --violet: #9C8CFF;
+  --font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: var(--bg); color: var(--text); font-family: var(--font); font-size: 17px; line-height: 1.7; overflow-x: hidden; -webkit-font-smoothing: antialiased; }
+a { color: var(--mint); }
+.nav { border-bottom: 1px solid var(--line); background: rgba(11,10,26,.85); position: sticky; top: 0; z-index: 5; backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
+.nav .in { max-width: 760px; margin: 0 auto; padding: 0 16px; height: 58px; display: flex; align-items: center; gap: 12px; }
+.brand { display: flex; align-items: center; gap: 10px; color: var(--text); font-weight: 700; text-decoration: none; }
+.brand img { width: 28px; height: 28px; }
+.btn { display: inline-flex; align-items: center; gap: 8px; padding: 11px 18px; border-radius: 999px; font-weight: 650; font-size: 15px; text-decoration: none; white-space: nowrap; }
+.btn-primary { background: linear-gradient(135deg, var(--mint), var(--green)); color: #062016; }
+.nav .btn { margin-left: auto; padding: 8px 14px; font-size: 14px; }
+main { max-width: 760px; margin: 0 auto; padding: 36px 16px 64px; }
+.crumbs { font-size: 14px; color: var(--faint); margin-bottom: 12px; }
+.crumbs a { color: var(--muted); text-decoration: none; }
+h1 { font-size: clamp(32px, 6vw, 46px); line-height: 1.1; letter-spacing: -.03em; margin: 0 0 12px; }
+.meta { color: var(--faint); font-size: 14px; margin-bottom: 28px; }
+h2 { font-size: clamp(24px, 4vw, 30px); letter-spacing: -.02em; line-height: 1.2; margin: 52px 0 12px; }
+h3 { font-size: 19px; margin: 0 0 4px; color: var(--text); }
+p, li { color: var(--muted); }
+strong, b { color: var(--text); }
+.answer { border: 1px solid rgba(125,249,207,.3); background: rgba(125,249,207,.06); border-radius: 18px; padding: 20px 22px; }
+.answer p { margin: 0; color: var(--text); }
+.answer p + p { margin-top: 10px; color: var(--muted); }
+.compare { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 24px 0 8px; }
+.compare figure { margin: 0; }
+.compare figcaption { font-size: 13px; color: var(--faint); text-transform: uppercase; letter-spacing: .1em; margin-bottom: 6px; }
+.compare svg { width: 100%; height: auto; display: block; border-radius: 14px; box-shadow: inset 0 0 0 1px var(--line); }
+@media (max-width: 520px) { .compare { grid-template-columns: 1fr; } }
+table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 15.5px; }
+th, td { text-align: left; padding: 12px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { color: var(--text); font-weight: 650; }
+td { color: var(--muted); }
+td:first-child { color: var(--text); }
+.yes { color: var(--green); font-weight: 650; } .no { color: #FF7A70; font-weight: 650; }
+.table-wrap { overflow-x: auto; }
+ol.steps { list-style: none; padding: 0; margin: 16px 0; counter-reset: s; display: grid; gap: 12px; }
+ol.steps > li { counter-increment: s; position: relative; padding: 18px 18px 18px 64px; border: 1px solid var(--line); border-radius: 18px; background: rgba(255,255,255,.025); min-width: 0; scroll-margin-top: 72px; }
+ol.steps > li::before { content: counter(s); position: absolute; left: 18px; top: 18px; width: 32px; height: 32px; border-radius: 10px; display: grid; place-items: center; font-weight: 800; color: #062016; background: linear-gradient(135deg, var(--mint), var(--green)); }
+ol.steps p { margin: 0; }
+code { font-family: var(--mono); font-size: .88em; background: rgba(255,255,255,.07); padding: 2px 6px; border-radius: 6px; color: #CFE9DE; word-break: break-word; }
+.code { display: block; margin-top: 10px; padding: 12px 14px; border-radius: 12px; background: #07060f; border: 1px solid var(--line-2); overflow-x: auto; white-space: nowrap; font-family: var(--mono); font-size: 13.5px; color: #CFE9DE; }
+details { border-bottom: 1px solid var(--line); }
+summary { cursor: pointer; padding: 16px 0; font-weight: 650; color: var(--text); }
+details p { margin: 0 0 16px; }
+.cta { margin: 40px 0 0; padding: 24px; border-radius: 20px; border: 1px solid var(--line-2); background: radial-gradient(70% 120% at 0% 0%, rgba(75,59,214,.35), transparent 70%), var(--surface); display: flex; flex-wrap: wrap; gap: 16px; align-items: center; justify-content: space-between; }
+.cta p { margin: 0; color: var(--text); font-weight: 650; font-size: 18px; }
+footer { border-top: 1px solid var(--line); color: var(--faint); font-size: 14px; }
+footer .in { max-width: 760px; margin: 0 auto; padding: 28px 16px 48px; }
+</style>
+</head>
+<body>
+<nav class="nav" aria-label="Main">
+  <div class="in">
+    <a class="brand" href="../"><img src="../icon.svg" alt="" width="28" height="28">Barkeep</a>
+    <a class="btn btn-primary" href="https://github.com/shoccho/barkeep/releases/latest/download/Barkeep.apk">Download</a>
+  </div>
+</nav>
+
+<main>
+  <div class="crumbs"><a href="../">Barkeep</a> › Guide</div>
+  <h1>How to hide the battery percentage on Samsung One UI 9 &amp; 8.5</h1>
+  <div class="meta">Updated November 2026 · 4-minute read</div>
+
+  <div class="answer">
+    <p><strong>Short answer:</strong> One UI 9 has no setting that shows the battery icon without the number. You get the battery with the percentage inside it, or the percentage on its own. To keep the icon and hide the percentage, install the free app <a href="../">Barkeep</a>. It hides Samsung's battery and draws a number-free battery icon in exactly the same place.</p>
+    <p>It works on Galaxy phones with One UI 8.5 or 9 (Android 16 or later), takes about five minutes to set up, and turns off in one tap.</p>
+  </div>
+
+  <div class="compare" aria-hidden="true">
+    <figure>
+      <figcaption>One UI 9</figcaption>
+      <svg viewBox="268 8 84 24"><rect x="268" y="8" width="84" height="24" fill="#101018"/><g fill="#fff"><path transform="translate(272 13.5)" d="M1.5 4.6h2.4L7.2 1.8v9.4L3.9 8.4H1.5z"/><path transform="translate(288 13.5)" d="M6.5 12 L0.4 4.7 A9.6 9.6 0 0 1 12.6 4.7 Z"/><g transform="translate(304 13.5)"><rect x="0.8" y="9" width="2.3" height="3" rx=".6"/><rect x="3.9" y="6.5" width="2.3" height="5.5" rx=".6"/><rect x="7" y="4" width="2.3" height="8" rx=".6"/><rect x="10.1" y="1.3" width="2.3" height="10.7" rx=".6" opacity=".32"/></g></g><rect x="320" y="14" width="26" height="12" rx="6" fill="#5b5b66"/><rect x="320" y="14" width="19" height="12" rx="6" fill="#fff"/><rect x="333" y="14" width="6" height="12" fill="#fff"/><text x="333" y="23.2" text-anchor="middle" font-size="9" font-weight="700" font-family="-apple-system,sans-serif" fill="#000">72</text></svg>
+    </figure>
+    <figure>
+      <figcaption>With Barkeep</figcaption>
+      <svg viewBox="268 8 84 24"><rect x="268" y="8" width="84" height="24" fill="#101018"/><g fill="#fff"><path transform="translate(272 13.5)" d="M1.5 4.6h2.4L7.2 1.8v9.4L3.9 8.4H1.5z"/><path transform="translate(288 13.5)" d="M6.5 12 L0.4 4.7 A9.6 9.6 0 0 1 12.6 4.7 Z"/><g transform="translate(304 13.5)"><rect x="0.8" y="9" width="2.3" height="3" rx=".6"/><rect x="3.9" y="6.5" width="2.3" height="5.5" rx=".6"/><rect x="7" y="4" width="2.3" height="8" rx=".6"/><rect x="10.1" y="1.3" width="2.3" height="10.7" rx=".6" opacity=".32"/></g></g><rect x="320.7" y="14.45" width="21.6" height="11.1" rx="3.4" fill="none" stroke="#fff" stroke-width="1.4"/><rect x="343.6" y="17.55" width="2" height="4.9" rx="1" fill="#fff"/><rect x="322.2" y="15.95" width="13.6" height="8.1" rx="1.6" fill="#fff"/></svg>
+    </figure>
+  </div>
+
+  <h2>Why One UI can't do it on its own</h2>
+  <p>Samsung redesigned the status bar battery so the percentage lives <em>inside</em> the battery icon. One UI 9's battery options give you the battery with the percentage inside it, or the percentage on its own — there's no option for the icon alone. Every choice either keeps the number or drops the icon.</p>
+  <p>Here's how the usual workarounds compare:</p>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Option</th><th>Battery icon</th><th>Percentage</th></tr></thead>
+      <tbody>
+        <tr><td>One UI 9 status bar settings</td><td class="yes">Shown</td><td class="no">Always shown</td></tr>
+        <tr><td>Good Lock › QuickStar</td><td class="no">Hidden completely</td><td class="yes">Hidden</td></tr>
+        <tr><td>Barkeep</td><td class="yes">Shown, in 5 styles</td><td class="yes">Hidden</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2>Step by step: hide the battery percentage with Barkeep</h2>
+  <ol class="steps">
+    <li id="step-install"><h3>Install Barkeep</h3><p>Download <a href="https://github.com/shoccho/barkeep/releases/latest/download/Barkeep.apk">Barkeep.apk</a> and open it. Allow installs from your browser when asked. If One UI blocks it, turn off Auto Blocker (Settings › Security and privacy › Auto Blocker) for the install.</p></li>
+    <li id="step-overlay"><h3>Allow “Appear on top”</h3><p>Open Barkeep and flip the main switch. It takes you to the setting; allow it. A battery icon without a number appears right away, beside the camera.</p></li>
+    <li id="step-adb"><h3>Run the one-time adb command</h3><p>This lets Barkeep hide Samsung's own battery. Turn on USB debugging (Settings › About phone › Software information › tap <b>Build number</b> 7 times, then Developer options › USB debugging). Connect your phone to any computer, open <a href="https://app.tangoapp.dev/" rel="noopener">app.tangoapp.dev</a> in Chrome or Edge, connect, open <b>Shell</b> and run:</p>
+      <div class="code">pm grant com.github.shoccho.barkeep android.permission.WRITE_SECURE_SETTINGS</div>
+      <p style="margin-top: 10px;">Nothing to install. If you already have adb, run it with <code>adb shell</code> in front. <a href="../#adb">More on this step</a>.</p></li>
+    <li id="step-a11y"><h3>Turn on the accessibility service</h3><p>In Barkeep, open <b>Permissions</b> and tap <b>Turn on</b>. Barkeep uses it only to find Samsung's battery on screen and read the status bar icon colour.</p></li>
+    <li id="step-place"><h3>Put it where Samsung's battery was</h3><p>Under <b>Position</b>, pick <b>Own icons</b>: Samsung's battery and right-side icons are hidden and Barkeep redraws them, with a number-free battery at the far right. Or pick <b>Samsung's spot</b>, which paints a solid battery icon exactly over Samsung's numbered one. Then choose a style: Capsule, Classic, Dot, Camera ring or Edge line.</p></li>
+  </ol>
+
+  <h2>Getting the percentage back</h2>
+  <p>Turn the pill off in Barkeep or from its Quick Settings tile. Samsung's battery, with its percentage, and your status icons come back exactly as they were. Barkeep keeps track of which changes are its own, so your other settings are never touched.</p>
+
+  <h2>Questions</h2>
+  <details><summary>Is there a setting in One UI 9 to show the battery icon without the percentage?</summary><p>No. One UI 9 shows the battery with the percentage inside it, or the percentage alone. To keep the icon and drop the number you need an app such as Barkeep.</p></details>
+  <details><summary>Can Good Lock's QuickStar hide the battery percentage?</summary><p>QuickStar can hide the battery icon completely, but it can't keep the icon without the number. Barkeep hides Samsung's battery the same way and draws a number-free battery icon in its place.</p></details>
+  <details><summary>Does it work on One UI 8.5 and other Galaxy phones?</summary><p>Barkeep needs Android 16 or later, so it installs on One UI 8.5 and One UI 9. It's tuned on a Galaxy A56; other Galaxy phones should work but haven't been tested.</p></details>
+  <details><summary>How do I get the battery percentage back?</summary><p>Turn Barkeep's pill off, from the app or its Quick Settings tile. Samsung's battery and status icons come back exactly as they were.</p></details>
+  <details><summary>Do I need a computer?</summary><p>Only for the one-time adb step, and only for a minute: a browser-based adb at app.tangoapp.dev runs it from Chrome or Edge with nothing to install. Without it, Barkeep can still cover Samsung's number using Samsung's spot.</p></details>
+
+  <div class="cta">
+    <p>Keep the battery icon. Lose the number.</p>
+    <a class="btn btn-primary" href="https://github.com/shoccho/barkeep/releases/latest/download/Barkeep.apk">Download Barkeep — free</a>
+  </div>
+  <p style="margin-top: 16px; font-size: 15px;">See every style, colour option and feature on the <a href="../">Barkeep home page</a>.</p>
+</main>
+
+<footer><div class="in">Barkeep is free and has no internet permission. Not affiliated with Samsung. Galaxy, One UI and Good Lock are trademarks of Samsung Electronics.</div></footer>
+</body>
+</html>
