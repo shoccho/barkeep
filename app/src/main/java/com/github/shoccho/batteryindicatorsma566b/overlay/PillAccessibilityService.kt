@@ -32,6 +32,7 @@ import com.github.shoccho.batteryindicatorsma566b.core.PillSettings
 import com.github.shoccho.batteryindicatorsma566b.core.PillStyle
 import com.github.shoccho.batteryindicatorsma566b.core.SettingsRepository
 import com.github.shoccho.batteryindicatorsma566b.core.SystemBatteryIcon
+import com.github.shoccho.batteryindicatorsma566b.core.effectivePlacement
 import com.github.shoccho.batteryindicatorsma566b.core.TintSampler
 import com.github.shoccho.batteryindicatorsma566b.core.Placement
 import kotlinx.coroutines.CoroutineScope
@@ -194,7 +195,7 @@ class PillAccessibilityService : AccessibilityService() {
 
     private fun scan() {
         val s = repo.current
-        if (s.enabled && s.placement == Placement.OWN_ICONS) {
+        if (s.enabled && s.effectivePlacement(SystemBatteryIcon.hasPermission(this)) == Placement.OWN_ICONS) {
             startMonitor()
             if (screenOn) syncRow(s) else removeRow()
         } else {

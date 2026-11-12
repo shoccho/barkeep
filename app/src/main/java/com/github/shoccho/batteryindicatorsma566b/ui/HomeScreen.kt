@@ -82,6 +82,7 @@ import com.github.shoccho.batteryindicatorsma566b.core.PillStyle
 import com.github.shoccho.batteryindicatorsma566b.core.Placement
 import com.github.shoccho.batteryindicatorsma566b.core.SettingsRepository
 import com.github.shoccho.batteryindicatorsma566b.core.SystemBatteryIcon
+import com.github.shoccho.batteryindicatorsma566b.core.effectivePlacement
 import com.github.shoccho.batteryindicatorsma566b.overlay.OverlayService
 import com.github.shoccho.batteryindicatorsma566b.overlay.PillAccessibilityService
 import java.util.Locale
@@ -106,7 +107,12 @@ fun HomeScreen() {
     var wantEnable by rememberSaveable { mutableStateOf(false) }
 
     LifecycleResumeEffect(Unit) {
+        val hadSecureSettings = permissions.secureSettings
         permissions = Permissions.read(context)
+        // The adb grant came or went while away: let the running pill switch "Own icons" on or off.
+        if (permissions.secureSettings != hadSecureSettings && OverlayService.running.value) {
+            OverlayService.start(context)
+        }
         screen = ScreenInfo.read(context)
         // Came back from the "Appear on top" screen after asking to turn on.
         if (wantEnable && permissions.overlay) {
@@ -157,7 +163,7 @@ fun HomeScreen() {
                 HeroCard(
                     settings, liveBattery, screen, tint,
                     coverLive = settings.placement == Placement.SAMSUNG_SPOT && a11yConnected,
-                    rowLive = settings.placement == Placement.OWN_ICONS && a11yConnected,
+                    rowLive = settings.effectivePlacement(permissions.secureSettings) == Placement.OWN_ICONS && a11yConnected,
                 )
             }
             item { MasterSwitch(settings.enabled, running, permissions.overlay, setEnabled) }
@@ -488,6 +494,7 @@ private fun PlacementSection(
     update: ((PillSettings) -> PillSettings) -> Unit,
     refreshPermissions: () -> Unit,
 ) {
+    val placement = s.effectivePlacement(p.secureSettings)
     Section("Position") {
         FlowRow(
             Modifier.padding(horizontal = 20.dp, vertical = 6.dp),
@@ -495,13 +502,25 @@ private fun PlacementSection(
         ) {
             Placement.entries.forEach { pl ->
                 FilterChip(
-                    selected = s.placement == pl,
+                    selected = placement == pl,
                     onClick = { update { it.copy(placement = pl) } },
                     label = { Text(pl.label) },
+                    // Without the grant Samsung's icons can't be hidden, so the row would double them.
+                    enabled = pl != Placement.OWN_ICONS || p.secureSettings,
                 )
             }
         }
-        when (s.placement) {
+        if (!p.secureSettings) {
+            Hint(
+                if (s.placement == Placement.OWN_ICONS) {
+                    "Own icons is paused: it needs the one-time adb grant (see Permissions). " +
+                        "Until then the pill uses the free position, and Own icons comes back by itself once granted."
+                } else {
+                    "Own icons needs the one-time adb grant (see Permissions) so it can hide Samsung's icons."
+                },
+            )
+        }
+        when (placement) {
             Placement.SAMSUNG_SPOT -> {
                 CoverControls(s, p, a11yConnected, update, refreshPermissions)
                 return@Section
@@ -641,9 +660,6 @@ private fun OwnIconsControls(
             "Samsung's icons back exactly as they were.",
     )
     if (!a11yConnected) AccessibilityRow(p, a11yConnected, refreshPermissions)
-    if (!p.secureSettings) {
-        Hint("Also needs the one-time adb grant (see Permissions) to hide Samsung's icons.")
-    }
     if (!(p.phone && p.nearby)) {
         Hint("Allow Phone & Nearby devices under Permissions for both SIMs, the 5G/4G label and Bluetooth connected.")
     }
@@ -793,7 +809,7 @@ private fun ColorSection(s: PillSettings, a11yConnected: Boolean, update: ((Pill
 private fun BehaviourSection(s: PillSettings, p: Permissions, update: ((PillSettings) -> PillSettings) -> Unit) {
     val on = listOf(
         s.showBolt, s.chargingAnimation, s.criticalPulse, s.hideInFullscreen, s.hideInLandscape, s.startOnBoot,
-    ).count { it } + if (s.hideSystemIcon && s.placement == Placement.FREE) 1 else 0
+    ).count { it } + if (s.hideSystemIcon && s.effectivePlacement(p.secureSettings) == Placement.FREE) 1 else 0
     Section("Behaviour", fold = rememberFold("behaviour"), summary = "Charging, full screen, start-up · $on on") {
         SwitchRow("Charging bolt", s.showBolt, { v -> update { it.copy(showBolt = v) } })
         SwitchRow(
@@ -813,11 +829,11 @@ private fun BehaviourSection(s: PillSettings, p: Permissions, update: ((PillSett
         SwitchRow(
             "Hide Samsung's battery", s.hideSystemIcon, { v -> update { it.copy(hideSystemIcon = v) } },
             subtitle = when {
-                s.placement != Placement.FREE -> "Free position only — the other positions manage Samsung's icons themselves"
+                s.effectivePlacement(p.secureSettings) != Placement.FREE -> "Free position only — the other positions manage Samsung's icons themselves"
                 p.secureSettings -> "Restored automatically when the pill turns off"
                 else -> "Needs the one-time adb grant (see Permissions)"
             },
-            enabled = p.secureSettings && s.placement == Placement.FREE,
+            enabled = p.secureSettings && s.effectivePlacement(p.secureSettings) == Placement.FREE,
         )
     }
 }

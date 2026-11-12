@@ -19,6 +19,14 @@ enum class Placement(val label: String) {
     OWN_ICONS("Own icons"),
 }
 
+/**
+ * The placement actually in effect. "Own icons" only works when the app may hide Samsung's icons
+ * (the one-time adb grant); without it the row would sit on top of Samsung's own and show
+ * everything twice, so it runs as [Placement.FREE] until the grant arrives. The saved choice is kept.
+ */
+fun PillSettings.effectivePlacement(canHideIcons: Boolean): Placement =
+    if (placement == Placement.OWN_ICONS && !canHideIcons) Placement.FREE else placement
+
 /** Which side of the screen the pill is measured from. */
 enum class Anchor(val label: String) { LEFT("Left"), CENTER("Center"), RIGHT("Right") }
 

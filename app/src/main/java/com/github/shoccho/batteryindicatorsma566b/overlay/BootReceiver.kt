@@ -22,8 +22,7 @@ class BootReceiver : BroadcastReceiver() {
             OverlayService.start(context)
         } else {
             // Pill isn't coming back: put Samsung's battery icon back the way the user had it.
-            SystemBatteryIcon.sync(context, repo, want = null)
-            SystemBatteryIcon.syncSlots(context, repo, hide = false)
+            SystemBatteryIcon.sync(context, repo, wantBatteryHidden = null, ownIcons = false)
         }
     }
 }
