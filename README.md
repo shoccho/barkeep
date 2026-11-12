@@ -47,7 +47,7 @@ Release builds are signed from a git-ignored `keystore.properties` (format in `a
 ## Release
 
 ```sh
-scripts/release.sh v1.1 "What changed"
+scripts/release.sh v1.2 "What changed"
 ```
 
 Builds and tests, then uploads `Barkeep.apk` to a new GitHub release. The website's download button always points at the latest release.
